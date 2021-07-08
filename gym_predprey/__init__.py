@@ -4,6 +4,11 @@ from gym.envs.registration import register
 logger = logging.getLogger(__name__)
 
 register(
+    id='PredPrey-Evorobot-1v1-v0',
+    entry_point='gym_predprey.envs:PredPreyEvorobot',
+)
+
+register(
     id='PredPrey-1v1-v0',
     entry_point='gym_predprey.envs:PredPrey1v1',
 )
