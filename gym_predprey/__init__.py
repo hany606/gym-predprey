@@ -15,15 +15,29 @@ register(
 
 register(
     id='PredPrey-Superior-1v1-v0',
-    entry_point='longdpole.envs:PredPrey1v1Super',
+    entry_point='gym_predprey.envs:PredPrey1v1Super',
 )
 
 register(
-    id='PredPrey-pred-v0',
-    entry_point='longdpole.envs:PredPrey1v1Pred',
+    id='PredPrey-Pred-v0',
+    entry_point='gym_predprey.envs:PredPrey1v1Pred',
 )
 
 register(
-    id='PredPrey-prey-v0',
-    entry_point='longdpole.envs:PredPrey1v1Prey',
+    id='PredPrey-Prey-v0',
+    entry_point='gym_predprey.envs:PredPrey1v1Prey',
+)
+
+
+register(
+    id='SelfPlay1v1-Pred-v0',
+    entry_point='gym_predprey.envs:SelfPlayPredEnv',
+    kwargs={"log_dir":None, "algorithm_class":None}
+)
+
+register(
+    id='SelfPlay1v1-Prey-v0',
+    entry_point='gym_predprey.envs:SelfPlayPreyEnv',
+    kwargs={"log_dir":None, "algorithm_class":None}
+
 )
