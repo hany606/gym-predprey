@@ -19,7 +19,6 @@ from gym import spaces
 from gym.utils import seeding
 
 import ErPredprey
-from gym_predprey.envs import renderWorld
 
 class Behavior: # For only prey for now, we need to make it configured for the predator also :TODO:
     def __init__(self, **kwargs):
@@ -99,6 +98,8 @@ class PredPreyEvorobot(gym.Env):
         self.caught = False
         self.steps_done = False
 
+        self.render_flag = False
+
     def reinit(self, max_num_steps=1000, prey_behavior=None):
         self.max_num_steps = max_num_steps
         self.prey_behavior = prey_behavior
@@ -164,6 +165,9 @@ class PredPreyEvorobot(gym.Env):
         return ob, reward, done, info
 
     def render(self, mode='human'):
+        if(not self.render_flag):
+            from gym_predprey.envs import renderWorld
+            self.render_flag = True
         self.env.render()
         info = f'Step: {self.num_steps}'
         renderWorld.update(deepcopy(self.objs), info, deepcopy(self.ob), deepcopy(self.ac), None)
