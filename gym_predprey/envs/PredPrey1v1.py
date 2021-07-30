@@ -150,6 +150,16 @@ class PredPreyEvorobot(gym.Env):
     def _process_info(self):
         return {}
 
+    def who_won(self):
+        if(self.caught):
+            return "pred"
+        if(self.steps_done):
+            return "prey"
+        return ""
+
+    def _process_info(self):
+        return {"win":self.who_won()}
+
     def step(self, action):
         self.num_steps += 1
         self._process_action(action)        # self.ac has changed
@@ -271,7 +281,6 @@ class PredPrey1v1Super(PredPreyEvorobot, gym.Env):
 class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
     def __init__(self, **kwargs):
         PredPreyEvorobot.__init__(self, **kwargs)
-        print(f"Predator ---- Prey policy: {True if self.prey_policy is not None else False}")
         self.action_space      = spaces.Box(low=np.array([-1 for _ in range(self.env.noutputs)]),
                                             high=np.array([1 for _ in range(self.env.noutputs)]),
                                             dtype=np.float32)
@@ -299,6 +308,16 @@ class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
         # return ob[:24]#self.env.ninputs]
         return ob
 
+    def who_won(self):
+        if(self.caught):
+            return 1
+        if(self.steps_done):
+            return -1
+        return 0
+    
+    def _process_info(self):
+        return {"win":self.who_won()}
+
     # TODO: think about it more and read about it
     def _process_reward(self, ob, returned_reward, done):
         # Dense reward based on catching without taking into consideration the distance between them
@@ -321,7 +340,6 @@ class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
 class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
     def __init__(self, **kwargs):
         PredPreyEvorobot.__init__(self, **kwargs)
-        print(f"Prey ---- Pred policy: {True if self.pred_policy is not None else False}")
         self.action_space      = spaces.Box(low=np.array([-1 for _ in range(self.env.noutputs)]),
                                             high=np.array([1 for _ in range(self.env.noutputs)]),
                                             dtype=np.float32)
@@ -348,6 +366,16 @@ class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
         # print(self.env.ninputs)
         # return ob[24:]#self.env.ninputs]
         return ob
+
+    def who_won(self):
+        if(self.caught):
+            return -1
+        if(self.steps_done):
+            return 1
+        return 0
+    
+    def _process_info(self):
+        return {"win":self.who_won()}
 
     # TODO: think about it more and read about it
     def _process_reward(self, ob, returned_reward, done):

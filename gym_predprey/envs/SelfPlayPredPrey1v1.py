@@ -1,6 +1,7 @@
 import os
 from gym_predprey.envs.PredPrey1v1 import PredPrey1v1Pred
 from gym_predprey.envs.PredPrey1v1 import PredPrey1v1Prey
+from stable_baselines3.ppo.ppo import PPO as sb3PPO
 
 from bach_utils.os import *
 
@@ -27,7 +28,7 @@ from bach_utils.os import *
 #           TODO: How can we make it? -> Sol.: Add get_prey_obs(), get_pred_obs() to PredPreyEvorobot with NotImplemented and implement them only pred and prey envs
 #           and instead of passing the self.obs in PredPreyEvorobot._process_action "self.ac[2:] = self.prey_policy.compute_action(self.ob)", we will pass get_prey_obs(self.get_prey_obs())
 
-# TODO: Add feature to use specific path and model to be loaded to the prey to be used for testing
+# TODO: Add feature to use specific list of path and model to be loaded to the opponent to be used for testing -> make it accessable from the train script not from the environment
 # TODO: Add feature to easily change the selection of the opponent model in resetting
 # TODO: Take care that with every reset we load a model, think about it
 
@@ -36,32 +37,49 @@ class SelfPlayEnvSB3:
     def __init__(self, log_dir, algorithm_class, env_opponent_name):
         self.log_dir = log_dir
         self.algorithm_class = algorithm_class
-        self.opponent_model = None
-        self.opponent_model_filename = None
+        self.opponent_policy = None
+        self.opponent_policy_filename = None
         self.env_opponent_name = env_opponent_name
+        self.target_opponent_policy_filename = None
+
+    # TODO: make opponent_policy_filename work correct
+    def set_target_opponent_policy_filename(self, policy_filename):
+        self.target_opponent_policy_filename = policy_filename
 
     # TODO: This works fine for identical agents but different agents will not work as they won't have the same action spaec
     # Compute actions for the opponent agent in the environment (Note: that the action for )
+    # This is only be called for the opponent agent
     def compute_action(self, obs): # the policy
-        if self.opponent_model is None:
+        if self.opponent_policy is None:
             return self.action_space.sample() # return a random action
         else:
-            action, _ = self.opponent_model.predict(obs) # it is predict because this is PPO from stable-baselines not rllib
+            action = None
+            if(isinstance(self.opponent_policy, sb3PPO)):
+                action, _ = self.opponent_policy.predict(obs) #it is predict because this is PPO from stable-baselines not rllib
+            # if(isinstance(self.opponent_policy, rllibPPO)):
+                # action, _ = self.opponent_policy.compute_action(obs) #it is predict because this is PPO from stable-baselines not rllib
+
             return action
 
     def reset(self):
-        # load model if it's there
-        # model_list = [f for f in os.listdir(os.path.join(self.log_dir, self.env_opponent_name)) if f.startswith("history")]
-        # model_list.sort()
-        model_list = get_sorted(os.path.join(self.log_dir, self.env_opponent_name), "history") # now this is the latest model for the prey
-        if len(model_list) > 0:
-            filename = os.path.join(self.log_dir, self.env_opponent_name, model_list[-1]) # the latest model
-            if filename != self.opponent_model_filename:
-                print("loading model: ", filename)
-                self.opponent_model_filename = filename
-                if self.opponent_model is not None:
-                    del self.opponent_model
-                self.opponent_model = self.algorithm_class.load(filename, env=self)
+        if(self.target_opponent_policy_filename is not None):
+            self.opponent_policy = self.algorithm_class.load(self.target_opponent_policy_filename, env=self) # here we load the opponent policy
+            self.target_opponent_policy_filename = None # as if we want to have a specific opponent policy, we need to set it before each reset
+        else:
+            # TODO: Move this selection of the opponents to train script
+            # load model if it's there
+            # model_list = [f for f in os.listdir(os.path.join(self.log_dir, self.env_opponent_name)) if f.startswith("history")]
+            # model_list.sort()
+            model_list = get_sorted(os.path.join(self.log_dir, self.env_opponent_name), "history") # now this is the latest model for the prey
+            if len(model_list) > 0:
+                filename = os.path.join(self.log_dir, self.env_opponent_name, model_list[-1]) # the latest model
+                if filename != self.opponent_policy_filename:
+                    print("loading model: ", filename)
+                    self.opponent_policy_filename = filename
+                    if self.opponent_policy is not None:
+                        del self.opponent_policy
+                    # if(isinstance(self.algorithm_class, sb3PPO) or isinstance(super(self.algorithm_class), sb3PPO)):
+                    self.opponent_policy = self.algorithm_class.load(filename, env=self) # here we load the opponent policy
 
 class SelfPlayPredEnv(SelfPlayEnvSB3, PredPrey1v1Pred):
     # wrapper over the normal single player env, but loads the best self play model
