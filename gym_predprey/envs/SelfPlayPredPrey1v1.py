@@ -43,7 +43,6 @@ class SelfPlayEnvSB3:
         self.startswith_keyword = startswith_keyword
         
 
-    # TODO: make opponent_policy_filename work correct
     def set_target_opponent_policy_filename(self, policy_filename):
         self.target_opponent_policy_filename = policy_filename
 
