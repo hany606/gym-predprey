@@ -28,19 +28,20 @@ from bach_utils.os import *
 #           TODO: How can we make it? -> Sol.: Add get_prey_obs(), get_pred_obs() to PredPreyEvorobot with NotImplemented and implement them only pred and prey envs
 #           and instead of passing the self.obs in PredPreyEvorobot._process_action "self.ac[2:] = self.prey_policy.compute_action(self.ob)", we will pass get_prey_obs(self.get_prey_obs())
 
-# TODO: Add feature to use specific list of path and model to be loaded to the opponent to be used for testing -> make it accessable from the train script not from the environment
-# TODO: Add feature to easily change the selection of the opponent model in resetting
 # TODO: Take care that with every reset we load a model, think about it
 
 # Parent class for all using SB3 functions to predict
 class SelfPlayEnvSB3:
-    def __init__(self, log_dir, algorithm_class, env_opponent_name):
+    def __init__(self, log_dir, algorithm_class, env_opponent_name, opponent_selection="latest", startswith_keyword = "history"):
         self.log_dir = log_dir
         self.algorithm_class = algorithm_class
         self.opponent_policy = None
         self.opponent_policy_filename = None
         self.env_opponent_name = env_opponent_name
         self.target_opponent_policy_filename = None
+        self.opponent_selection = opponent_selection
+        self.startswith_keyword = startswith_keyword
+        
 
     # TODO: make opponent_policy_filename work correct
     def set_target_opponent_policy_filename(self, policy_filename):
@@ -61,30 +62,55 @@ class SelfPlayEnvSB3:
 
             return action
 
+    def _sample_opponent(self):        
+        loading_path = os.path.join(self.log_dir, self.env_opponent_name)
+        files_list = get_startswith(loading_path, self.startswith_keyword)
+        # print(f"Found {len(files_list)} files in {loading_path}")
+        opponent_filename = None
+        if(len(files_list) > 0):
+            if(self.opponent_selection == "random"):
+                opponent_filename = get_random_from(files_list)[0]
+            
+            elif(self.opponent_selection == "latest"):
+                sort_steps(files_list) # TODO: Take care about this computation bottelneck here O(NlogN), it will be a headach for large archives
+                latest = files_list[-1]
+                opponent_filename = latest
+
+            elif(self.opponent_selection == "highest"):
+                sort_metric(files_list)
+                target = files_list[-1]
+                opponent_filename = target
+
+            elif(self.opponent_selection == "lowest"):
+                sort_metric(files_list)
+                target = files_list[0]
+                opponent_filename = target
+
+            opponent_filename = os.path.join(self.log_dir, self.env_opponent_name, opponent_filename)
+            return opponent_filename
+
+    def _load_opponent(self, opponent_filename):
+        if opponent_filename is not None and opponent_filename != self.opponent_policy_filename:
+            print("loading model: ", opponent_filename)
+            self.opponent_policy_filename = opponent_filename
+            if self.opponent_policy is not None:
+                del self.opponent_policy
+            # if(isinstance(self.algorithm_class, sb3PPO) or isinstance(super(self.algorithm_class), sb3PPO)):
+            self.opponent_policy = self.algorithm_class.load(opponent_filename, env=self) # here we load the opponent policy
+
+
     def reset(self):
         if(self.target_opponent_policy_filename is not None):
-            self.opponent_policy = self.algorithm_class.load(self.target_opponent_policy_filename, env=self) # here we load the opponent policy
+            self._load_opponent(self.target_opponent_policy_filename)
             self.target_opponent_policy_filename = None # as if we want to have a specific opponent policy, we need to set it before each reset
         else:
-            # TODO: Move this selection of the opponents to train script
-            # load model if it's there
-            # model_list = [f for f in os.listdir(os.path.join(self.log_dir, self.env_opponent_name)) if f.startswith("history")]
-            # model_list.sort()
-            model_list = get_sorted(os.path.join(self.log_dir, self.env_opponent_name), "history") # now this is the latest model for the prey
-            if len(model_list) > 0:
-                filename = os.path.join(self.log_dir, self.env_opponent_name, model_list[-1]) # the latest model
-                if filename != self.opponent_policy_filename:
-                    print("loading model: ", filename)
-                    self.opponent_policy_filename = filename
-                    if self.opponent_policy is not None:
-                        del self.opponent_policy
-                    # if(isinstance(self.algorithm_class, sb3PPO) or isinstance(super(self.algorithm_class), sb3PPO)):
-                    self.opponent_policy = self.algorithm_class.load(filename, env=self) # here we load the opponent policy
+            opponent_filename = self._sample_opponent()
+            self._load_opponent(opponent_filename)
 
 class SelfPlayPredEnv(SelfPlayEnvSB3, PredPrey1v1Pred):
     # wrapper over the normal single player env, but loads the best self play model
-    def __init__(self, log_dir, algorithm_class):
-        SelfPlayEnvSB3.__init__(self, log_dir, algorithm_class, env_opponent_name="prey")
+    def __init__(self, *args, **kwargs):
+        SelfPlayEnvSB3.__init__(self, *args, **kwargs, env_opponent_name="prey")
         PredPrey1v1Pred.__init__(self)
         self.prey_policy = self # It replaces the policy for the other agent with the best policy that found during reset (This class have it)
 
@@ -96,8 +122,8 @@ class SelfPlayPredEnv(SelfPlayEnvSB3, PredPrey1v1Pred):
 
 class SelfPlayPreyEnv(SelfPlayEnvSB3, PredPrey1v1Prey):
     # wrapper over the normal single player env, but loads the best self play model
-    def __init__(self, log_dir, algorithm_class):
-        SelfPlayEnvSB3.__init__(self, log_dir, algorithm_class, env_opponent_name="pred")
+    def __init__(self, *args, **kwargs):
+        SelfPlayEnvSB3.__init__(self, *args, **kwargs, env_opponent_name="pred")
         PredPrey1v1Prey.__init__(self)
         self.pred_policy = self # It replaces the policy for the other agent with the best policy that found during reset (This class have it)
 
