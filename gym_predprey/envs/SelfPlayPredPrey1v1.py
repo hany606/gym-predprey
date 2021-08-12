@@ -89,8 +89,9 @@ class SelfPlayEnvSB3:
             return opponent_filename
 
     def _load_opponent(self, opponent_filename):
+        # print(f"Wants to load {opponent_filename}")
         if opponent_filename is not None and opponent_filename != self.opponent_policy_filename:
-            print("loading model: ", opponent_filename)
+            # print("loading model: ", opponent_filename)
             self.opponent_policy_filename = opponent_filename
             if self.opponent_policy is not None:
                 del self.opponent_policy
