@@ -41,6 +41,7 @@ class SelfPlayEnvSB3:
         self.target_opponent_policy_filename = None
         self.opponent_selection = opponent_selection
         self.startswith_keyword = startswith_keyword
+        self._name = None
         
 
     def set_target_opponent_policy_filename(self, policy_filename):
@@ -61,7 +62,8 @@ class SelfPlayEnvSB3:
 
             return action
 
-    def _sample_opponent(self):        
+    def _sample_opponent(self):
+        print("Sample opponent")      
         loading_path = os.path.join(self.log_dir, self.env_opponent_name)
         files_list = get_startswith(loading_path, self.startswith_keyword)
         # print(f"Found {len(files_list)} files in {loading_path}")
@@ -86,6 +88,7 @@ class SelfPlayEnvSB3:
                 opponent_filename = target
 
             opponent_filename = os.path.join(self.log_dir, self.env_opponent_name, opponent_filename)
+            print(opponent_filename)
             return opponent_filename
 
     def _load_opponent(self, opponent_filename):
@@ -100,12 +103,15 @@ class SelfPlayEnvSB3:
 
 
     def reset(self):
-        if(self.target_opponent_policy_filename is not None):
-            self._load_opponent(self.target_opponent_policy_filename)
-            self.target_opponent_policy_filename = None # as if we want to have a specific opponent policy, we need to set it before each reset
-        else:
-            opponent_filename = self._sample_opponent()
-            self._load_opponent(opponent_filename)
+        print(f"Reset, env name: {self._name}, {self.target_opponent_policy_filename}")
+        self._load_opponent(self.target_opponent_policy_filename)
+        # self.target_opponent_policy_filename = None
+        # if(self.target_opponent_policy_filename is not None):
+        #     self._load_opponent(self.target_opponent_policy_filename)
+        #     self.target_opponent_policy_filename = None # as if we want to have a specific opponent policy, we need to set it before each reset
+        # else:
+        #     opponent_filename = self._sample_opponent()
+        #     self._load_opponent(opponent_filename)
 
 class SelfPlayPredEnv(SelfPlayEnvSB3, PredPrey1v1Pred):
     # wrapper over the normal single player env, but loads the best self play model
