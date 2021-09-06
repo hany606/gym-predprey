@@ -3,7 +3,9 @@ from gym_predprey.envs.PredPrey1v1 import PredPrey1v1Pred
 from gym_predprey.envs.PredPrey1v1 import PredPrey1v1Prey
 from stable_baselines3.ppo.ppo import PPO as sb3PPO
 
-from bach_utils.os import *
+import bach_utils.os as utos
+import bach_utils.list as utlst
+import bach_utils.sorting as utsrt
 
 # These envs are wrappers for the original environments to be able to train one agent while another agent in the environment is following a specific policy
 
@@ -30,9 +32,17 @@ from bach_utils.os import *
 
 # TODO: Take care that with every reset we load a model, think about it
 
+OS = True
+
 # Parent class for all using SB3 functions to predict
 class SelfPlayEnvSB3:
-    def __init__(self, log_dir, algorithm_class, env_opponent_name, opponent_selection="latest", startswith_keyword = "history"):
+    def __init__(self, log_dir,
+                       algorithm_class, 
+                       env_opponent_name, 
+                       archive,
+                       opponent_selection="latest", 
+                       startswith_keyword = "history",
+                ):
         self.log_dir = log_dir
         self.algorithm_class = algorithm_class
         self.opponent_policy = None
@@ -42,6 +52,7 @@ class SelfPlayEnvSB3:
         self.opponent_selection = opponent_selection
         self.startswith_keyword = startswith_keyword
         self._name = None
+        self.archive = archive
         
 
     def set_target_opponent_policy_filename(self, policy_filename):
@@ -62,34 +73,35 @@ class SelfPlayEnvSB3:
 
             return action
 
-    def _sample_opponent(self):
-        print("Sample opponent")      
-        loading_path = os.path.join(self.log_dir, self.env_opponent_name)
-        files_list = get_startswith(loading_path, self.startswith_keyword)
-        # print(f"Found {len(files_list)} files in {loading_path}")
-        opponent_filename = None
-        if(len(files_list) > 0):
-            if(self.opponent_selection == "random"):
-                opponent_filename = get_random_from(files_list)[0]
+    # Not used
+    # def _sample_opponent(self):
+    #     print("Sample opponent")      
+    #     loading_path = os.path.join(self.log_dir, self.env_opponent_name)
+    #     files_list = utos.get_startswith(loading_path, self.startswith_keyword)
+    #     # print(f"Found {len(files_list)} files in {loading_path}")
+    #     opponent_filename = None
+    #     if(len(files_list) > 0):
+    #         if(self.opponent_selection == "random"):
+    #             opponent_filename = utos.get_random_from(files_list)[0]
             
-            elif(self.opponent_selection == "latest"):
-                sort_steps(files_list) # TODO: Take care about this computation bottelneck here O(NlogN), it will be a headach for large archives
-                latest = files_list[-1]
-                opponent_filename = latest
+    #         elif(self.opponent_selection == "latest"):
+    #             files_list = utsrt.sort_steps(files_list) # TODO: Take care about this computation bottelneck here O(NlogN), it will be a headach for large archives
+    #             latest = files_list[-1]
+    #             opponent_filename = latest
 
-            elif(self.opponent_selection == "highest"):
-                sort_metric(files_list)
-                target = files_list[-1]
-                opponent_filename = target
+    #         elif(self.opponent_selection == "highest"):
+    #             files_list = utsrt.sort_metric(files_list)
+    #             target = files_list[-1]
+    #             opponent_filename = target
 
-            elif(self.opponent_selection == "lowest"):
-                sort_metric(files_list)
-                target = files_list[0]
-                opponent_filename = target
+    #         elif(self.opponent_selection == "lowest"):
+    #             files_list = utsrt.sort_metric(files_list)
+    #             target = files_list[0]
+    #             opponent_filename = target
 
-            opponent_filename = os.path.join(self.log_dir, self.env_opponent_name, opponent_filename)
-            print(opponent_filename)
-            return opponent_filename
+    #         opponent_filename = os.path.join(self.log_dir, self.env_opponent_name, opponent_filename)
+    #         print(opponent_filename)
+    #         return opponent_filename
 
     def _load_opponent(self, opponent_filename):
         # print(f"Wants to load {opponent_filename}")
@@ -99,7 +111,10 @@ class SelfPlayEnvSB3:
             if self.opponent_policy is not None:
                 del self.opponent_policy
             # if(isinstance(self.algorithm_class, sb3PPO) or isinstance(super(self.algorithm_class), sb3PPO)):
-            self.opponent_policy = self.algorithm_class.load(opponent_filename, env=self) # here we load the opponent policy
+            if(not OS):
+                self.opponent_policy = self.archive.load(opponent_filename) # here we load the opponent policy
+            if(OS):
+                self.opponent_policy = self.algorithm_class.load(opponent_filename, env=self) # here we load the opponent policy
 
 
     def reset(self):

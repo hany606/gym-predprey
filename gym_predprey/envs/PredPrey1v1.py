@@ -18,6 +18,7 @@ import gym
 from gym import spaces
 from gym.utils import seeding
 
+
 import ErPredprey
 
 class Behavior: # For only prey for now, we need to make it configured for the predator also :TODO:
