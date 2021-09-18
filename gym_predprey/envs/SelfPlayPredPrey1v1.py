@@ -32,7 +32,7 @@ import bach_utils.sorting as utsrt
 
 # TODO: Take care that with every reset we load a model, think about it
 
-OS = True
+OS = False
 
 # Parent class for all using SB3 functions to predict
 class SelfPlayEnvSB3:
@@ -53,6 +53,7 @@ class SelfPlayEnvSB3:
         self.startswith_keyword = startswith_keyword
         self._name = None
         self.archive = archive
+        self.OS = OS
         
 
     def set_target_opponent_policy_filename(self, policy_filename):
@@ -111,14 +112,14 @@ class SelfPlayEnvSB3:
             if self.opponent_policy is not None:
                 del self.opponent_policy
             # if(isinstance(self.algorithm_class, sb3PPO) or isinstance(super(self.algorithm_class), sb3PPO)):
-            if(not OS):
-                self.opponent_policy = self.archive.load(opponent_filename) # here we load the opponent policy
-            if(OS):
+            if(not self.OS):
+                self.opponent_policy = self.archive.load(name=opponent_filename, env=self, algorithm_class=self.algorithm_class) # here we load the opponent policy
+            if(self.OS):
                 self.opponent_policy = self.algorithm_class.load(opponent_filename, env=self) # here we load the opponent policy
 
 
     def reset(self):
-        print(f"Reset, env name: {self._name}, {self.target_opponent_policy_filename}")
+        print(f"Reset, env name: {self._name}, archive_id: {self.archive.random_id}, target_policy: {self.target_opponent_policy_filename}")
         self._load_opponent(self.target_opponent_policy_filename)
         # self.target_opponent_policy_filename = None
         # if(self.target_opponent_policy_filename is not None):
