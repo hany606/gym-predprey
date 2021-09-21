@@ -119,7 +119,10 @@ class SelfPlayEnvSB3:
 
 
     def reset(self):
-        print(f"Reset, env name: {self._name}, archive_id: {self.archive.random_id}, target_policy: {self.target_opponent_policy_filename}")
+        if(self.archive is None):
+            print(f"Reset, env name: {self._name}, OS, target_policy: {self.target_opponent_policy_filename}")
+        else:
+            print(f"Reset, env name: {self._name}, archive_id: {self.archive.random_id}, target_policy: {self.target_opponent_policy_filename}")
         self._load_opponent(self.target_opponent_policy_filename)
         # self.target_opponent_policy_filename = None
         # if(self.target_opponent_policy_filename is not None):
