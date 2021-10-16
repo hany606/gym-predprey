@@ -2,11 +2,12 @@
 # Predetor, Prey -> Predetor is red, Prey is green
 
 import sys
+import os
 sys.path
-sys.path.append('/home/hany606/repos/research/Drones-PEG-Bachelor-Thesis-2022/2D/gym-predprey/predpreylib')
+path = os.environ["PREDPREYLIB"]
+sys.path.append(path)
 # print(sys.path)
 
-import os
 import math
 import numpy as np
 
