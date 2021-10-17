@@ -54,6 +54,7 @@ class SelfPlayEnvSB3:
         self._name = None
         self.archive = archive
         self.OS = OS
+        self.states = None
         
 
     def set_target_opponent_policy_filename(self, policy_filename):
@@ -68,7 +69,7 @@ class SelfPlayEnvSB3:
         else:
             action = None
             if(isinstance(self.opponent_policy, sb3PPO)):
-                action, _ = self.opponent_policy.predict(obs) #it is predict because this is PPO from stable-baselines not rllib
+                action, self.states = self.opponent_policy.predict(obs, state=self.states) #it is predict because this is PPO from stable-baselines not rllib
             # if(isinstance(self.opponent_policy, rllibPPO)):
                 # action, _ = self.opponent_policy.compute_action(obs) #it is predict because this is PPO from stable-baselines not rllib
 
@@ -119,6 +120,7 @@ class SelfPlayEnvSB3:
 
 
     def reset(self):
+        self.states = None
         if(self.archive is None):
             print(f"Reset, env name: {self._name}, OS, target_policy: {self.target_opponent_policy_filename}")
         else:
