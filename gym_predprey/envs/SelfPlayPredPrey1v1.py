@@ -44,16 +44,18 @@ class SelfPlayEnvSB3:
                        startswith_keyword = "history",
                 ):
         self.log_dir = log_dir
-        self.algorithm_class = algorithm_class
-        self.opponent_policy = None
-        self.opponent_policy_filename = None
+        self.algorithm_class = algorithm_class  # algorithm class for the opponent
+        self.opponent_policy = None             # The policy itself after it is loaded
+        self.opponent_policy_filename = None    # Current loaded policy name -> File -> as it was implement first to be stored on disk (But now in cache=archive) 
         self.env_opponent_name = env_opponent_name
         self.target_opponent_policy_filename = None
         self.opponent_selection = opponent_selection
         self.startswith_keyword = startswith_keyword
         self._name = None
-        self.archive = archive
+        self.archive = archive  # opponent archive
         self.OS = OS
+        if(archive is None):
+            self.OS = True
         self.states = None
         
 
@@ -63,6 +65,7 @@ class SelfPlayEnvSB3:
     # TODO: This works fine for identical agents but different agents will not work as they won't have the same action spaec
     # Compute actions for the opponent agent in the environment (Note: that the action for )
     # This is only be called for the opponent agent
+    # TODO: This should be renamed -> compute_opponent_action or opponent_compute_policy-> Change them in PredPrey1v1.py
     def compute_action(self, obs): # the policy
         if self.opponent_policy is None:
             return self.action_space.sample() # return a random action
@@ -107,6 +110,7 @@ class SelfPlayEnvSB3:
 
     def _load_opponent(self, opponent_filename):
         # print(f"Wants to load {opponent_filename}")
+        # Prevent reloading the same policy again or reload empty policy -> empty policy means random policy
         if opponent_filename is not None and opponent_filename != self.opponent_policy_filename:
             # print("loading model: ", opponent_filename)
             self.opponent_policy_filename = opponent_filename
@@ -137,8 +141,10 @@ class SelfPlayEnvSB3:
 class SelfPlayPredEnv(SelfPlayEnvSB3, PredPrey1v1Pred):
     # wrapper over the normal single player env, but loads the best self play model
     def __init__(self, *args, **kwargs):
+        seed_val = kwargs['seed_val']
+        del kwargs['seed_val']
         SelfPlayEnvSB3.__init__(self, *args, **kwargs, env_opponent_name="prey")
-        PredPrey1v1Pred.__init__(self)
+        PredPrey1v1Pred.__init__(self, seed_val=seed_val)
         self.prey_policy = self # It replaces the policy for the other agent with the best policy that found during reset (This class have it)
 
     # Change to search only for the prey
@@ -150,8 +156,10 @@ class SelfPlayPredEnv(SelfPlayEnvSB3, PredPrey1v1Pred):
 class SelfPlayPreyEnv(SelfPlayEnvSB3, PredPrey1v1Prey):
     # wrapper over the normal single player env, but loads the best self play model
     def __init__(self, *args, **kwargs):
+        seed_val = kwargs['seed_val']
+        del kwargs['seed_val']
         SelfPlayEnvSB3.__init__(self, *args, **kwargs, env_opponent_name="pred")
-        PredPrey1v1Prey.__init__(self)
+        PredPrey1v1Prey.__init__(self, seed_val=seed_val)
         self.pred_policy = self # It replaces the policy for the other agent with the best policy that found during reset (This class have it)
 
     # Change to search only for the prey

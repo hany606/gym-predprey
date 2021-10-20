@@ -67,9 +67,10 @@ class Behavior: # For only prey for now, we need to make it configured for the p
     
 # This is exactly the same as the one used with the evorobotpy2
 class PredPreyEvorobot(gym.Env):
-    def __init__(self, max_num_steps=1000, pred_behavior=None, prey_behavior=None, pred_policy=None, prey_policy=None):
+    def __init__(self, max_num_steps=1000, pred_behavior=None, prey_behavior=None, pred_policy=None, prey_policy=None, seed_val=None):
         self.nrobots = 2
         self.env = ErPredprey.PyErProblem()
+
         # print(self.env.ninputs) #24 = 8 (ir) + 9 (camera) + 5 (ground) + 1 (bias) + 1 (time)
         self.ob = np.arange(self.env.ninputs * self.nrobots, dtype=np.float32)
         self.ac = np.arange(self.env.noutputs * self.nrobots, dtype=np.float32)
@@ -81,7 +82,7 @@ class PredPreyEvorobot(gym.Env):
         self.env.copyAct(self.ac)
         self.env.copyDone(self.done)
         self.env.copyDobj(self.objs)
-        self.seed()
+        self.seed(seed_val)
 
         self.action_space      = spaces.Box(low=np.array([-1 for _ in range(self.env.noutputs)]),
                                             high=np.array([1 for _ in range(self.env.noutputs)]),
@@ -106,6 +107,8 @@ class PredPreyEvorobot(gym.Env):
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
+        print(f"Seed: {seed}")
+        self.env.seed(seed)
         return [seed]
 
     def reset(self):
@@ -316,7 +319,8 @@ class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
         if(self.steps_done):
             return -1
         return 0
-    
+
+    # No need for this function, it is already implemented in the parent class
     def _process_info(self):
         return {"win":self.who_won()}
 
@@ -376,6 +380,7 @@ class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
             return 1
         return 0
     
+    # No need for this function, it is already implemented in the parent class
     def _process_info(self):
         return {"win":self.who_won()}
 
