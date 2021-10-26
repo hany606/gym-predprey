@@ -29,7 +29,7 @@ import numpy as np
 
 
 win = None
-
+keys_returns = 0
 
 """
 # world data to be displayed
@@ -528,7 +528,7 @@ def calcRectCenter(l,t,r,b):#,v=()):
 ##    if len(v) : l,t,r,b = v[0],v[1],v[2],v[3]
     return l+((r-l)*0.5), t+((b-t)*0.5)
 
-def update(wobj, info, ob, ac, nact):
+def update(wobj, info, ob, ac, nact, extra_info=None):
 
     global win
     global robot
@@ -536,9 +536,33 @@ def update(wobj, info, ob, ac, nact):
     global y
     global wobjects
     global nobjects
+    global keys_returns
 
     if (win == None):
         win = window.Window()
+        @win.event
+        def on_key_press(symbol, modifiers):
+            global keys_returns
+            if(symbol == 113):  #q
+                win.close()
+                keys_returns = -1
+            elif(symbol == 115): #s
+                keys_returns = 1
+            elif(symbol == 100): #d
+                keys_returns = 2
+            elif(symbol == 97): #a
+                keys_returns = 3
+            elif(symbol == 65363): #right arrow
+                keys_returns = 4
+            elif(symbol == 65364): #down arrow
+                keys_returns = 5
+            elif(symbol == 65362): #up arrow
+                keys_returns = 6
+            elif(symbol == 65361): #left arrow
+                keys_returns = 7
+
+            # print("key", symbol, modifiers)
+
         win.set_size(600+10, 400+10+100)
         glEnable(GL_BLEND)
     
@@ -575,8 +599,14 @@ def update(wobj, info, ob, ac, nact):
         nobjects = []
         """
 
-
     win.dispatch_events()
+
+
+    if(keys_returns < 0):
+        val = keys_returns
+        keys_returns = 0
+        return val
+
     #clear window in white
     glClearColor(255,255,255,0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -648,10 +678,23 @@ def update(wobj, info, ob, ac, nact):
                           color=(0, 0, 0, 255),
                           x=0, y=490)
 
+    if(extra_info is not None):
+        label2 = pyglet.text.Label(extra_info,
+                            font_name='Arial',
+                            font_size=15,
+                            color=(0, 0, 0, 255),
+                            x=250, y=490)
+        label2.draw()
+
     # rend activation
     label.draw()
     win.flip()
-
+    if(keys_returns != 0):
+        val = keys_returns
+        keys_returns = 0
+        return val
+    else:
+        return 0
     """
     while not win.has_exit:
         win.dispatch_events()

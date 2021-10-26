@@ -67,7 +67,7 @@ class Behavior: # For only prey for now, we need to make it configured for the p
     
 # This is exactly the same as the one used with the evorobotpy2
 class PredPreyEvorobot(gym.Env):
-    def __init__(self, max_num_steps=1000, pred_behavior=None, prey_behavior=None, pred_policy=None, prey_policy=None, seed_val=None):
+    def __init__(self, max_num_steps=1000, pred_behavior=None, prey_behavior=None, pred_policy=None, prey_policy=None, seed_val=45):
         self.nrobots = 2
         self.env = ErPredprey.PyErProblem()
 
@@ -84,11 +84,11 @@ class PredPreyEvorobot(gym.Env):
         self.env.copyDobj(self.objs)
         self.seed(seed_val)
 
-        self.action_space      = spaces.Box(low=np.array([-1 for _ in range(self.env.noutputs)]),
-                                            high=np.array([1 for _ in range(self.env.noutputs)]),
+        self.action_space      = spaces.Box(low=np.array([-1 for _ in range(self.nrobots*self.env.noutputs)]),
+                                            high=np.array([1 for _ in range(self.nrobots*self.env.noutputs)]),
                                             dtype=np.float32)
-        self.observation_space = spaces.Box(low=np.array([0 for _ in range(self.env.ninputs)]),
-                                            high=np.array([1000 for _ in range(self.env.ninputs)]),
+        self.observation_space = spaces.Box(low=np.array([0 for _ in range(self.nrobots*self.env.ninputs)]),
+                                            high=np.array([1000 for _ in range(self.nrobots*self.env.ninputs)]),
                                             dtype=np.float64)
 
 
@@ -123,9 +123,7 @@ class PredPreyEvorobot(gym.Env):
         self.ac = deepcopy(action)
         self.ac = np.array(self.ac, dtype=np.float32)
         if(self.prey_behavior is not None):
-            # print(self.ac)
-            # print("----")
-            self.ac = self.prey_behavior(self.ac, self.num_steps, self.ob)
+            self.ac = self.prey_behavior(deepcopy(self.ac), self.num_steps, self.ob)
             # print(self.ac)
         if(self.pred_policy is not None):
             # print("policy pred")
@@ -177,12 +175,12 @@ class PredPreyEvorobot(gym.Env):
         info = self._process_info()
         return ob, reward, done, info
 
-    def render(self, mode='human'):
+    def render(self, mode='human', extra_info=None):
         from gym_predprey.envs import renderWorld
         self.env.render()
         info = f'Step: {self.num_steps}'
-        renderWorld.update(deepcopy(self.objs), info, deepcopy(self.ob), deepcopy(self.ac), None)
-
+        return renderWorld.update(deepcopy(self.objs), info, deepcopy(self.ob), deepcopy(self.ac), None, extra_info=extra_info)
+        
 # Env that has dictionary of observations for multi-agent training
 # This is made in context of multi-agent system
 class PredPrey1v1(PredPreyEvorobot, gym.Env, MultiAgentEnv):
@@ -401,3 +399,43 @@ class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
             prey_reward = 10
             predetor_reward = -10            
         return prey_reward
+
+
+if __name__ == "__main__":
+    import gym
+    # import gym_predprey
+    from time import sleep
+
+    from gym_predprey.envs.PredPrey1v1 import Behavior
+
+    # env = gym.make('PredPrey-Superior-1v1-v0')
+    env = PredPreyEvorobot(seed_val=45)
+
+    # behavior = Behavior(**{"amplitude":0.5, "freq":15})
+    # env.reinit(prey_behavior=behavior.cos_1D)
+
+    behavior = Behavior()
+    env.reinit(prey_behavior=behavior.fixed_prey)
+
+    for i in range(3):
+        env.reset()
+        for _ in range (1000):
+            action = env.action_space.sample()
+            # action[0] = [0,0]
+            # action[1] = 1
+            # action[2] = 1
+            # action[3] = 1
+            observation, reward, done, info = env.step(action)
+            # print(observation.shape)
+            # print(reward)
+            ret = env.render(extra_info=f"Round {i}vs1")
+            if(ret != 0):
+                print(ret)
+            if(ret < 0):
+                print("Rendering has been killed")
+                break
+            sleep(0.01)
+            # print(done)
+            if ((isinstance(done, dict) and done["__all__"]) or (isinstance(done, bool) and done)):
+                break
+    env.close()
