@@ -37,21 +37,11 @@ OS = False#True
 # Parent class for all using SB3 functions to predict
 #TODO: Opponent_filename should be changed as it is not only for OS
 class SelfPlayEnvSB3:
-    def __init__(self, log_dir,
-                       algorithm_class, 
-                       env_opponent_name, 
-                       archive,
-                       opponent_selection="latest", 
-                       startswith_keyword = "history",
-                ):
-        self.log_dir = log_dir
+    def __init__(self, algorithm_class, archive):
         self.algorithm_class = algorithm_class  # algorithm class for the opponent
         self.opponent_policy = None             # The policy itself after it is loaded
         self.opponent_policy_filename = None    # Current loaded policy name -> File -> as it was implement first to be stored on disk (But now in cache=archive) 
-        self.env_opponent_name = env_opponent_name
         self.target_opponent_policy_filename = None
-        self.opponent_selection = opponent_selection
-        self.startswith_keyword = startswith_keyword
         self._name = None
         self.archive = archive  # opponent archive
         self.OS = OS
@@ -109,7 +99,7 @@ class SelfPlayPredEnv(SelfPlayEnvSB3, PredPrey1v1Pred):
     def __init__(self, *args, **kwargs):
         seed_val = kwargs['seed_val']
         del kwargs['seed_val']
-        SelfPlayEnvSB3.__init__(self, *args, **kwargs, env_opponent_name="prey")
+        SelfPlayEnvSB3.__init__(self, *args, **kwargs)  # env_opponent_name="prey"
         PredPrey1v1Pred.__init__(self, seed_val=seed_val)
         self.prey_policy = self # It replaces the policy for the other agent with the best policy that found during reset (This class have it)
 
@@ -124,7 +114,7 @@ class SelfPlayPreyEnv(SelfPlayEnvSB3, PredPrey1v1Prey):
     def __init__(self, *args, **kwargs):
         seed_val = kwargs['seed_val']
         del kwargs['seed_val']
-        SelfPlayEnvSB3.__init__(self, *args, **kwargs, env_opponent_name="pred")
+        SelfPlayEnvSB3.__init__(self, *args, **kwargs)  # env_opponent_name="pred"
         PredPrey1v1Prey.__init__(self, seed_val=seed_val)
         self.pred_policy = self # It replaces the policy for the other agent with the best policy that found during reset (This class have it)
 
