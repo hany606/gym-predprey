@@ -134,11 +134,13 @@ class PredPreyEvorobot(gym.Env):
         # self.ac = self.ac if self.prey_behavior is None else self.prey_behavior(self.ac, self.num_steps, self.ob)
 
         # print(self.ac)
-        self.env.copyAct(self.ac)
+        # self.env.copyAct(self.ac)
+        self.env.copyAct(deepcopy(self.ac))
 
     def _process_observation(self):
         self.env.copyObs(self.ob)
-        return self.ob
+        # return self.ob
+        return deepcopy(self.ob)
 
     def _process_reward(self, ob, returned_reward, done):
         return returned_reward

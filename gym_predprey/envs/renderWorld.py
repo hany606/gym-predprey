@@ -560,8 +560,10 @@ def update(wobj, info, ob, ac, nact, extra_info=None):
                 keys_returns = 6
             elif(symbol == 65361): #left arrow
                 keys_returns = 7
-
-            # print("key", symbol, modifiers)
+            elif(symbol == 119):    #w
+                keys_returns = 8
+            else:
+                print("key", symbol, modifiers)
 
         win.set_size(600+10, 400+10+100)
         glEnable(GL_BLEND)
