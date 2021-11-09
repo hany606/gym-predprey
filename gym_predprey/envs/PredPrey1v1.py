@@ -127,10 +127,14 @@ class PredPreyEvorobot(gym.Env):
             # print(self.ac)
         if(self.pred_policy is not None):
             # print("policy pred")
-            self.ac[:2] = self.pred_policy.compute_action(self.ob)
+            # self.ac[:2] = self.pred_policy.compute_action(self.ob)
+            self.ac[:self.env.noutputs] = self.pred_policy.compute_action(self.ob[:self.env.ninputs])
+
         if(self.prey_policy is not None):
             # print("policy prey")
-            self.ac[2:] = self.prey_policy.compute_action(self.ob)
+            # self.ac[2:] = self.prey_policy.compute_action(self.ob)
+            self.ac[self.env.noutputs:] = self.prey_policy.compute_action(self.ob[self.env.ninputs:])
+
         # self.ac = self.ac if self.prey_behavior is None else self.prey_behavior(self.ac, self.num_steps, self.ob)
 
         # print(self.ac)
@@ -289,13 +293,13 @@ class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
         self.action_space      = spaces.Box(low=np.array([-1 for _ in range(self.env.noutputs)]),
                                             high=np.array([1 for _ in range(self.env.noutputs)]),
                                             dtype=np.float32)
-        # self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs)]),
-        #                                     high=np.array([1000 for _ in range(self.env.ninputs)]),
-        #                                     dtype=np.float64)
-
-        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs*self.nrobots)]),
-                                            high=np.array([1000 for _ in range(self.env.ninputs*self.nrobots)]),
+        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs)]),
+                                            high=np.array([1000 for _ in range(self.env.ninputs)]),
                                             dtype=np.float64)
+
+        # self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs*self.nrobots)]),
+        #                                     high=np.array([1000 for _ in range(self.env.ninputs*self.nrobots)]),
+        #                                     dtype=np.float64)
 
 
     def _process_action(self, action):
@@ -309,9 +313,8 @@ class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
     def _process_observation(self):
         # Knows nothing from the observations from the other agent info
         ob = PredPreyEvorobot._process_observation(self)
-        # print(self.env.ninputs)
-        # return ob[:24]#self.env.ninputs]
-        return ob
+        return deepcopy(ob[:self.env.ninputs])
+        # return deepcopy(ob)
 
     def who_won(self):
         if(self.caught):
@@ -349,13 +352,13 @@ class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
         self.action_space      = spaces.Box(low=np.array([-1 for _ in range(self.env.noutputs)]),
                                             high=np.array([1 for _ in range(self.env.noutputs)]),
                                             dtype=np.float32)
-        # self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs)]),
-        #                                     high=np.array([1000 for _ in range(self.env.ninputs)]),
-        #                                     dtype=np.float64)
-
-        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs*self.nrobots)]),
-                                            high=np.array([1000 for _ in range(self.env.ninputs*self.nrobots)]),
+        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs)]),
+                                            high=np.array([1000 for _ in range(self.env.ninputs)]),
                                             dtype=np.float64)
+
+        # self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs*self.nrobots)]),
+        #                                     high=np.array([1000 for _ in range(self.env.ninputs*self.nrobots)]),
+        #                                     dtype=np.float64)
 
 
     def _process_action(self, action):
@@ -370,8 +373,8 @@ class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
         # Knows nothing from the observations from the other agent info
         ob = PredPreyEvorobot._process_observation(self)
         # print(self.env.ninputs)
-        # return ob[24:]#self.env.ninputs]
-        return ob
+        return deepcopy(ob[self.env.ninputs:])
+        # return deepcopy(ob)
 
     def who_won(self):
         if(self.caught):
@@ -428,7 +431,8 @@ if __name__ == "__main__":
             # action[2] = 1
             # action[3] = 1
             observation, reward, done, info = env.step(action)
-            # print(observation.shape)
+            print(observation.shape)
+            print(observation)
             # print(reward)
             ret = env.render(extra_info=f"Round {i}vs1")
             if(ret != 0):
