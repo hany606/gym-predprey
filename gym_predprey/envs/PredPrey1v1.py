@@ -127,13 +127,17 @@ class PredPreyEvorobot(gym.Env):
             # print(self.ac)
         if(self.pred_policy is not None):
             # print("policy pred")
-            # self.ac[:2] = self.pred_policy.compute_action(self.ob)
-            self.ac[:self.env.noutputs] = self.pred_policy.compute_action(self.ob[:self.env.ninputs])
+            # Changed the observation input
+            self.ac[:self.env.noutputs] = self.pred_policy.compute_action(self.ob)
+            # self.ac[:self.env.noutputs] = self.pred_policy.compute_action(self.ob[:self.env.ninputs])
+            # self.ac[:self.env.noutputs] = self.pred_policy.compute_action(self.ob[self.env.ninputs:])
 
         if(self.prey_policy is not None):
             # print("policy prey")
-            # self.ac[2:] = self.prey_policy.compute_action(self.ob)
-            self.ac[self.env.noutputs:] = self.prey_policy.compute_action(self.ob[self.env.ninputs:])
+            # Changed the observation input
+            self.ac[self.env.noutputs:] = self.prey_policy.compute_action(self.ob)  # The agent gets the full observations
+            # self.ac[self.env.noutputs:] = self.prey_policy.compute_action(self.ob[self.env.ninputs:]) # The agent gets its own observations
+            # self.ac[self.env.noutputs:] = self.prey_policy.compute_action(self.ob[:self.env.ninputs]) # The agent gets the opponent observations
 
         # self.ac = self.ac if self.prey_behavior is None else self.prey_behavior(self.ac, self.num_steps, self.ob)
 
@@ -146,8 +150,28 @@ class PredPreyEvorobot(gym.Env):
         # return self.ob
         return deepcopy(self.ob)
 
+    # def _process_reward(self, ob, returned_reward, done):
+    #     return returned_reward
+
     def _process_reward(self, ob, returned_reward, done):
-        return returned_reward
+        action = deepcopy(self.ac)
+        norm_action_predator = np.tanh(np.linalg.norm(action[:self.env.noutputs]))/3
+        norm_action_prey     = np.tanh(np.linalg.norm(action[self.env.noutputs:]))/3
+        # Dense reward based on catching without taking into consideration the distance between them
+        prey_reward = 1 - norm_action_prey
+        predetor_reward = -1 - norm_action_predator
+        # dist = np.linalg.norm(ob[0] - ob[1]) # this was made if the agent returned x and y positions
+        # eps = 200
+        # print(f"distance: {dist}")
+        # if (dist < eps):
+        if(self.caught):   # if the predetor caught the prey
+            # self.caught = True
+            prey_reward = -10
+            predetor_reward = 10
+        if(self.steps_done):
+            prey_reward = 10
+            predetor_reward = -10            
+        return predetor_reward, prey_reward
 
     def _process_done(self):
         self.env.copyDone(self.done)
@@ -293,13 +317,14 @@ class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
         self.action_space      = spaces.Box(low=np.array([-1 for _ in range(self.env.noutputs)]),
                                             high=np.array([1 for _ in range(self.env.noutputs)]),
                                             dtype=np.float32)
-        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs)]),
-                                            high=np.array([1000 for _ in range(self.env.ninputs)]),
-                                            dtype=np.float64)
-
-        # self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs*self.nrobots)]),
-        #                                     high=np.array([1000 for _ in range(self.env.ninputs*self.nrobots)]),
+        # Changed the observation input
+        # self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs)]),
+        #                                     high=np.array([1000 for _ in range(self.env.ninputs)]),
         #                                     dtype=np.float64)
+
+        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs*self.nrobots)]),
+                                            high=np.array([1000 for _ in range(self.env.ninputs*self.nrobots)]),
+                                            dtype=np.float64)
 
 
     def _process_action(self, action):
@@ -313,8 +338,10 @@ class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
     def _process_observation(self):
         # Knows nothing from the observations from the other agent info
         ob = PredPreyEvorobot._process_observation(self)
-        return deepcopy(ob[:self.env.ninputs])
-        # return deepcopy(ob)
+        # Changed the observation input
+        # return deepcopy(ob[:self.env.ninputs])
+        # return deepcopy(ob[self.env.ninputs:])
+        return deepcopy(ob)
 
     def who_won(self):
         if(self.caught):
@@ -329,9 +356,14 @@ class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
 
     # TODO: think about it more and read about it
     def _process_reward(self, ob, returned_reward, done):
+        predator_reward, prey_reward = PredPreyEvorobot._process_reward(self, ob, returned_reward, done)
+        return predator_reward
+        action = deepcopy(self.ac)
+        norm_action_predator = np.tanh(np.norm(action[:self.env.noutputs]))/3
+        norm_action_prey     = np.tanh(np.norm(action[self.env.noutputs:]))/3
         # Dense reward based on catching without taking into consideration the distance between them
-        prey_reward = 1
-        predetor_reward = -1
+        prey_reward = 1 - norm_action_prey
+        predetor_reward = -1 - norm_action_predator
         # dist = np.linalg.norm(ob[0] - ob[1]) # this was made if the agent returned x and y positions
         # eps = 200
         # print(f"distance: {dist}")
@@ -345,6 +377,7 @@ class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
             predetor_reward = -10            
         return predetor_reward
         
+        
 # Env to train only the prey -> Pred is following a policy or behavior
 class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
     def __init__(self, **kwargs):
@@ -352,13 +385,14 @@ class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
         self.action_space      = spaces.Box(low=np.array([-1 for _ in range(self.env.noutputs)]),
                                             high=np.array([1 for _ in range(self.env.noutputs)]),
                                             dtype=np.float32)
-        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs)]),
-                                            high=np.array([1000 for _ in range(self.env.ninputs)]),
-                                            dtype=np.float64)
-
-        # self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs*self.nrobots)]),
-        #                                     high=np.array([1000 for _ in range(self.env.ninputs*self.nrobots)]),
+        # Changed the observation input
+        # self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs)]),
+        #                                     high=np.array([1000 for _ in range(self.env.ninputs)]),
         #                                     dtype=np.float64)
+
+        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs*self.nrobots)]),
+                                            high=np.array([1000 for _ in range(self.env.ninputs*self.nrobots)]),
+                                            dtype=np.float64)
 
 
     def _process_action(self, action):
@@ -373,8 +407,10 @@ class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
         # Knows nothing from the observations from the other agent info
         ob = PredPreyEvorobot._process_observation(self)
         # print(self.env.ninputs)
-        return deepcopy(ob[self.env.ninputs:])
-        # return deepcopy(ob)
+        # Changed the observation input
+        # return deepcopy(ob[self.env.ninputs:])
+        # return deepcopy(ob[:self.env.ninputs])
+        return deepcopy(ob)
 
     def who_won(self):
         if(self.caught):
@@ -389,21 +425,23 @@ class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
 
     # TODO: think about it more and read about it
     def _process_reward(self, ob, returned_reward, done):
-        # Dense reward based on catching without taking into consideration the distance between them
-        prey_reward = 1
-        predetor_reward = -1
-        # dist = np.linalg.norm(ob[0] - ob[1]) # this was made if the agent returned x and y positions
-        # eps = 200
-        # print(f"distance: {dist}")
-        # if (dist < eps):
-        if(self.caught):   # if the predetor caught the prey
-            # self.caught = True
-            prey_reward = -10
-            predetor_reward = 10
-        if(self.steps_done):
-            prey_reward = 10
-            predetor_reward = -10            
+        predator_reward, prey_reward = PredPreyEvorobot._process_reward(self, ob, returned_reward, done)
         return prey_reward
+        # # Dense reward based on catching without taking into consideration the distance between them
+        # prey_reward = 1
+        # predetor_reward = -1
+        # # dist = np.linalg.norm(ob[0] - ob[1]) # this was made if the agent returned x and y positions
+        # # eps = 200
+        # # print(f"distance: {dist}")
+        # # if (dist < eps):
+        # if(self.caught):   # if the predetor caught the prey
+        #     # self.caught = True
+        #     prey_reward = -10
+        #     predetor_reward = 10
+        # if(self.steps_done):
+        #     prey_reward = 10
+        #     predetor_reward = -10            
+        # return prey_reward
 
 
 if __name__ == "__main__":
@@ -425,7 +463,7 @@ if __name__ == "__main__":
     for i in range(3):
         env.reset()
         for _ in range (1000):
-            action = env.action_space.sample()
+            action = [1,-1,0,0]#env.action_space.sample()
             # action[0] = [0,0]
             # action[1] = 1
             # action[2] = 1
@@ -433,7 +471,7 @@ if __name__ == "__main__":
             observation, reward, done, info = env.step(action)
             print(observation.shape)
             print(observation)
-            # print(reward)
+            print(reward)
             ret = env.render(extra_info=f"Round {i}vs1")
             if(ret != 0):
                 print(ret)
