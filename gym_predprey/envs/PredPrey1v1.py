@@ -67,7 +67,13 @@ class Behavior: # For only prey for now, we need to make it configured for the p
     
 # This is exactly the same as the one used with the evorobotpy2
 class PredPreyEvorobot(gym.Env):
-    def __init__(self, max_num_steps=1000, pred_behavior=None, prey_behavior=None, pred_policy=None, prey_policy=None, seed_val=45):
+    def __init__(self,  max_num_steps=1000, 
+                        pred_behavior=None, 
+                        prey_behavior=None, 
+                        pred_policy=None, 
+                        prey_policy=None, 
+                        seed_val=45, 
+                        reward_type="normal"):
         self.nrobots = 2
         self.env = ErPredprey.PyErProblem()
 
@@ -98,6 +104,7 @@ class PredPreyEvorobot(gym.Env):
         self.prey_behavior = prey_behavior
         self.pred_policy = pred_policy
         self.prey_policy = prey_policy
+        self.reward_type = reward_type
         self.caught = False
         self.steps_done = False
 
@@ -120,8 +127,11 @@ class PredPreyEvorobot(gym.Env):
     # get action from the network
     # process the action to be passed to the environment
     def _process_action(self, action):
+        # action already passed with the selection of the actions for the agent (main agent) of the environment
+        #   For example, for pred_env -> the main is the predator and the opponenet is the prey and vice versa
         self.ac = deepcopy(action)
         self.ac = np.array(self.ac, dtype=np.float32)
+        # Contruct the actions for the opponent
         if(self.prey_behavior is not None):
             self.ac = self.prey_behavior(deepcopy(self.ac), self.num_steps, self.ob)
             # print(self.ac)
@@ -158,8 +168,13 @@ class PredPreyEvorobot(gym.Env):
         norm_action_predator = np.tanh(np.linalg.norm(action[:self.env.noutputs]))/3
         norm_action_prey     = np.tanh(np.linalg.norm(action[self.env.noutputs:]))/3
         # Dense reward based on catching without taking into consideration the distance between them
-        prey_reward = 1 - norm_action_prey
-        predetor_reward = -1 - norm_action_predator
+        prey_reward, predetor_reward = None, None
+        if(self.reward_type == "normal"):
+            prey_reward = 1
+            predetor_reward = -1
+        elif(self.reward_type == "action_norm_pen"):
+            prey_reward = 1 - norm_action_prey
+            predetor_reward = -1 - norm_action_predator
         # dist = np.linalg.norm(ob[0] - ob[1]) # this was made if the agent returned x and y positions
         # eps = 200
         # print(f"distance: {dist}")
@@ -213,6 +228,7 @@ class PredPreyEvorobot(gym.Env):
         
 # Env that has dictionary of observations for multi-agent training
 # This is made in context of multi-agent system
+# Old
 class PredPrey1v1(PredPreyEvorobot, gym.Env, MultiAgentEnv):
     def __init__(self, **kwargs):
         PredPreyEvorobot.__init__(self, **kwargs)
@@ -284,6 +300,7 @@ class PredPrey1v1(PredPreyEvorobot, gym.Env, MultiAgentEnv):
         return {i: {} for i in range(self.nrobots)}
 
 # Env that has all observations in one list (train as single agent -> one network but for multi-agent)
+# Old
 class PredPrey1v1Super(PredPreyEvorobot, gym.Env):
     def __init__(self, **kwargs):
         PredPreyEvorobot.__init__(self, **kwargs)
@@ -358,24 +375,24 @@ class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
     def _process_reward(self, ob, returned_reward, done):
         predator_reward, prey_reward = PredPreyEvorobot._process_reward(self, ob, returned_reward, done)
         return predator_reward
-        action = deepcopy(self.ac)
-        norm_action_predator = np.tanh(np.norm(action[:self.env.noutputs]))/3
-        norm_action_prey     = np.tanh(np.norm(action[self.env.noutputs:]))/3
-        # Dense reward based on catching without taking into consideration the distance between them
-        prey_reward = 1 - norm_action_prey
-        predetor_reward = -1 - norm_action_predator
-        # dist = np.linalg.norm(ob[0] - ob[1]) # this was made if the agent returned x and y positions
-        # eps = 200
-        # print(f"distance: {dist}")
-        # if (dist < eps):
-        if(self.caught):   # if the predetor caught the prey
-            # self.caught = True
-            prey_reward = -10
-            predetor_reward = 10
-        if(self.steps_done):
-            prey_reward = 10
-            predetor_reward = -10            
-        return predetor_reward
+        # action = deepcopy(self.ac)
+        # norm_action_predator = np.tanh(np.norm(action[:self.env.noutputs]))/3
+        # norm_action_prey     = np.tanh(np.norm(action[self.env.noutputs:]))/3
+        # # Dense reward based on catching without taking into consideration the distance between them
+        # prey_reward = 1 - norm_action_prey
+        # predetor_reward = -1 - norm_action_predator
+        # # dist = np.linalg.norm(ob[0] - ob[1]) # this was made if the agent returned x and y positions
+        # # eps = 200
+        # # print(f"distance: {dist}")
+        # # if (dist < eps):
+        # if(self.caught):   # if the predetor caught the prey
+        #     # self.caught = True
+        #     prey_reward = -10
+        #     predetor_reward = 10
+        # if(self.steps_done):
+        #     prey_reward = 10
+        #     predetor_reward = -10            
+        # return predetor_reward
         
         
 # Env to train only the prey -> Pred is following a policy or behavior
