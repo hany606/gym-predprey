@@ -124,6 +124,12 @@ class PredPreyEvorobot(gym.Env):
         ob = self._process_observation()
         return ob
 
+    def _get_agent_observation(self, ob):
+        return deepcopy(ob)
+
+    def _get_opponent_observation(self, ob):
+        return deepcopy(ob)
+
     # get action from the network
     # process the action to be passed to the environment
     def _process_action(self, action):
@@ -138,14 +144,16 @@ class PredPreyEvorobot(gym.Env):
         if(self.pred_policy is not None):
             # print("policy pred")
             # Changed the observation input
-            self.ac[:self.env.noutputs] = self.pred_policy.compute_action(self.ob)
+            self.ac[:self.env.noutputs] = self.pred_policy.compute_action(self._get_opponent_observation(self.ob))
+            # self.ac[:self.env.noutputs] = self.pred_policy.compute_action(self.ob)
             # self.ac[:self.env.noutputs] = self.pred_policy.compute_action(self.ob[:self.env.ninputs])
             # self.ac[:self.env.noutputs] = self.pred_policy.compute_action(self.ob[self.env.ninputs:])
 
         if(self.prey_policy is not None):
             # print("policy prey")
             # Changed the observation input
-            self.ac[self.env.noutputs:] = self.prey_policy.compute_action(self.ob)  # The agent gets the full observations
+            self.ac[self.env.noutputs:] = self.prey_policy.compute_action(self._get_opponent_observation(self.ob))
+            # self.ac[self.env.noutputs:] = self.prey_policy.compute_action(self.ob)  # The agent gets the full observations
             # self.ac[self.env.noutputs:] = self.prey_policy.compute_action(self.ob[self.env.ninputs:]) # The agent gets its own observations
             # self.ac[self.env.noutputs:] = self.prey_policy.compute_action(self.ob[:self.env.ninputs]) # The agent gets the opponent observations
 
@@ -192,8 +200,11 @@ class PredPreyEvorobot(gym.Env):
         self.env.copyDone(self.done)
         self.caught = self.done[0]
         self.steps_done = self.num_steps > self.max_num_steps
+        done = True if self.caught or self.steps_done else False
+        # if(done):
+        #     print(f"Lasted for {self.num_steps}")
         # print(self.steps_done, self.caught)
-        return True if self.caught or self.steps_done else False
+        return done
 
     def _process_info(self):
         return {}
