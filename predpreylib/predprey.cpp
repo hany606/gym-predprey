@@ -53,7 +53,7 @@ Problem::Problem()
     // read task parameters
 	nrobots = 2;  // number of robots
     // read steps from .ini file
-    readStepsFromConfig();
+    // readStepsFromConfig();
 	// create the environment
 	initEnvironment();
     // creates the list of robot structures that contain the robot data
@@ -418,7 +418,7 @@ void readStepsFromConfig()
  */
 int initCameraPPSensor(struct robot *cro)
 {
-    if (cro->idn == 0) printf("Camera[%d]: single color, 8 sectors and distance \n", 9);
+    // if (cro->idn == 0) printf("Camera[%d]: single color, 8 sectors and distance \n", 9);
     return(9);
 }
 

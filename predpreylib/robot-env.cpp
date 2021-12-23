@@ -129,20 +129,20 @@ void initRobot(struct robot *cro, int n, int robottype)
     cro->motorwheelsid = 0;              // id of the first motorwheels neuron
     cro->motorledsid = 0;                // id of the first motorleds neuron
 	
-    if (n == 0)
-     switch(robottype)
-      {
-        case Khepera:
-            printf("Robot: Khepera\n");
-            break;
-        case ePuck:
-            printf("Robot: ePuck\n");
-            break;
-        case MarXBot:
-			printf("Robot: MarXBot\n");
-            break;
+    // if (n == 0)
+    //  switch(robottype)
+    //   {
+    //     case Khepera:
+    //         printf("Robot: Khepera\n");
+    //         break;
+    //     case ePuck:
+    //         printf("Robot: ePuck\n");
+    //         break;
+    //     case MarXBot:
+	// 		printf("Robot: MarXBot\n");
+    //         break;
 			
-    }
+    // }
 }
 
 /*
@@ -445,7 +445,7 @@ load_obstacle(char *filename, int  *objectcf)
  */
 int initInfraredSensor(struct robot *cro)
 {
-   if (cro->idn == 0) printf("Sensor[%d]: sampled infrared sensors (robot %d)\n", 8, cro->type);
+//    if (cro->idn == 0) printf("Sensor[%d]: sampled infrared sensors (robot %d)\n", 8, cro->type);
 
    // init the environment and load environmental samples
    switch (cro->type)
@@ -652,7 +652,7 @@ void updateInfraredSensor(struct robot *cro)
 int initTimeSensor(struct robot *cro)
 {
     
-    if (cro->idn == 0) printf("Sensor[%d]: trial time \n", 1);
+    // if (cro->idn == 0) printf("Sensor[%d]: trial time \n", 1);
     return(1);
 }
 
@@ -676,7 +676,7 @@ void updateTimeSensor(struct robot *cro, int step, int nsteps)
 int initEnergySensor(struct robot *cro)
 {
     
-    if (cro->idn == 0) printf("Sensor[%d]: energy sensor \n", 1);
+    // if (cro->idn == 0) printf("Sensor[%d]: energy sensor \n", 1);
     return(1);
 }
 
@@ -698,7 +698,7 @@ void updateEnergySensor(struct robot *cro)
 int initBiasSensor(struct robot *cro)
 {
     
-    if (cro->idn == 0) printf("Sensor[%d]: bias\n", 1);
+    // if (cro->idn == 0) printf("Sensor[%d]: bias\n", 1);
     return(1);
 }
 
@@ -769,7 +769,7 @@ int initLaserDistanceSensor(struct robot *cro)
 {
    if (cro->nlasersensors <= 0 || cro->nlasersensors > 8)
      cro->nlasersensors = 8;
-   printf("Sensor[%d]: laser sensors\n", cro->nlasersensors);
+//    printf("Sensor[%d]: laser sensors\n", cro->nlasersensors);
    return(cro->nlasersensors);
 }
 
@@ -980,7 +980,7 @@ void savegenotype(char* filename, double* genotype, const int glen, int mode)
 int initLightSensor(struct robot *cro)
 {
     
-    if (cro->idn == 0) printf("Sensor[%d]: khepera light sensors\n", 8);
+    // if (cro->idn == 0) printf("Sensor[%d]: khepera light sensors\n", 8);
     
     // init the environment and load environmental samples
     switch (cro->type)
