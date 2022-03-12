@@ -11,7 +11,7 @@ sys.path.append(path)
 import math
 import numpy as np
 
-from ray.rllib.env.multi_agent_env import MultiAgentEnv, ENV_STATE
+# from ray.rllib.env.multi_agent_env import MultiAgentEnv, ENV_STATE
 
 from copy import deepcopy
 
@@ -21,6 +21,7 @@ from gym.utils import seeding
 
 
 import ErPredprey
+
 
 class Behavior: # For only prey for now, we need to make it configured for the predator also :TODO:
     def __init__(self, **kwargs):
@@ -240,7 +241,7 @@ class PredPreyEvorobot(gym.Env):
 # Env that has dictionary of observations for multi-agent training
 # This is made in context of multi-agent system
 # Old
-class PredPrey1v1(PredPreyEvorobot, gym.Env, MultiAgentEnv):
+class PredPrey1v1(PredPreyEvorobot, gym.Env):#, MultiAgentEnv):
     def __init__(self, **kwargs):
         PredPreyEvorobot.__init__(self, **kwargs)
         self.action_space      = spaces.Dict({i: spaces.Box(low=np.array([-1 for _ in range(self.env.noutputs)]),
