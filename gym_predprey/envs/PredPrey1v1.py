@@ -218,7 +218,7 @@ class PredPreyEvorobot(gym.Env):
         return ""
 
     def _process_info(self):
-        return {"win":self.who_won()}
+        return {"win":self.who_won(), "num_steps": self.num_steps}
 
     def step(self, action):
         self.num_steps += 1
@@ -230,6 +230,8 @@ class PredPreyEvorobot(gym.Env):
         done = self._process_done()         # self.done has changed
         reward = self._process_reward(ob, reward, self.done[0])
         info = self._process_info()
+        if(done):
+            print(info)
         return ob, reward, done, info
 
     def render(self, mode='human', extra_info=None):
@@ -379,10 +381,6 @@ class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
             return -1
         return 0
 
-    # No need for this function, it is already implemented in the parent class
-    def _process_info(self):
-        return {"win":self.who_won()}
-
     # TODO: think about it more and read about it
     def _process_reward(self, ob, returned_reward, done):
         predator_reward, prey_reward = PredPreyEvorobot._process_reward(self, ob, returned_reward, done)
@@ -448,9 +446,6 @@ class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
             return 1
         return 0
     
-    # No need for this function, it is already implemented in the parent class
-    def _process_info(self):
-        return {"win":self.who_won()}
 
     # TODO: think about it more and read about it
     def _process_reward(self, ob, returned_reward, done):
