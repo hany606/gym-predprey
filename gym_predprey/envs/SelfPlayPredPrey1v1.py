@@ -76,20 +76,22 @@ class SelfPlayEnvSB3:
     def _load_opponent(self, opponent_name):
         # print(f"Wants to load {opponent_name}")
         # Prevent reloading the same policy again or reload empty policy -> empty policy means random policy
-        if opponent_name is not None and opponent_name != self.opponent_policy_name:
-            # print("loading model: ", opponent_name)
-            self.opponent_policy_name = opponent_name
-            if self.opponent_policy is not None:
-                del self.opponent_policy
-            # if(isinstance(self.algorithm_class, sb3PPO) or isinstance(super(self.algorithm_class), sb3PPO)):
+        if opponent_name is not None:
             if("Training" in self._name):
-                print(f"Add frequency +1 for {self.target_opponent_policy_name}")
-                self.archive.add_freq(self.target_opponent_policy_name, 1) 
+                print(f"Add frequency +1 for {opponent_name}")
+                self.archive.add_freq(opponent_name, 1) 
         
-            if(not self.OS):
-                self.opponent_policy = self.archive.load(name=opponent_name, env=self, algorithm_class=self.algorithm_class) # here we load the opponent policy
-            if(self.OS):
-                self.opponent_policy = self.algorithm_class.load(opponent_name, env=self) # here we load the opponent policy
+            # To prevent the time for reloading it and it is already loaded
+            if(opponent_name != self.opponent_policy_name):
+                # print("loading model: ", opponent_name)
+                self.opponent_policy_name = opponent_name
+                if self.opponent_policy is not None:
+                    del self.opponent_policy
+                # if(isinstance(self.algorithm_class, sb3PPO) or isinstance(super(self.algorithm_class), sb3PPO)):
+                if(not self.OS):
+                    self.opponent_policy = self.archive.load(name=opponent_name, env=self, algorithm_class=self.algorithm_class) # here we load the opponent policy
+                if(self.OS):
+                    self.opponent_policy = self.algorithm_class.load(opponent_name, env=self) # here we load the opponent policy
 
 
     def reset(self):

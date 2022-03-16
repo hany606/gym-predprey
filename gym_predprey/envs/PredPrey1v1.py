@@ -200,7 +200,7 @@ class PredPreyEvorobot(gym.Env):
     def _process_done(self):
         self.env.copyDone(self.done)
         self.caught = self.done[0]
-        self.steps_done = self.num_steps > self.max_num_steps
+        self.steps_done = self.num_steps >= self.max_num_steps
         done = True if self.caught or self.steps_done else False
         # if(done):
         #     print(f"Lasted for {self.num_steps}")
