@@ -47,6 +47,7 @@ class SelfPlayEnvSB3:
         self.OS = OS
         self.sample_after_reset = sample_after_reset
         self.sampling_parameters = sampling_parameters
+        self.reset_counter = 0
 
         if(archive is None):
             self.OS = True
@@ -110,9 +111,9 @@ class SelfPlayEnvSB3:
                 # print("Not OS")
                 archive = self.archive.get_sorted(opponent_selection) # this return [sorted_names, sorted_policies]
                 models_names = archive[0]
-                sampled_opponent = utsmpl.sample_opponents(models_names, 1, selection=opponent_selection, sorted=True, randomly_reseed=randomly_reseed_sampling, delta=self.archive.delta)[0]
+                sampled_opponent = utsmpl.sample_opponents(models_names, 1, selection=opponent_selection, sorted=True, randomly_reseed=randomly_reseed_sampling, delta=self.archive.delta, idx=self.reset_counter)[0]
             if(self.OS):
-                sampled_opponent = utsmpl.sample_opponents_os(sample_path, startswith_keyword, 1, selection=opponent_selection, randomly_reseed=randomly_reseed_sampling, delta=self.archive.delta)[0]
+                sampled_opponent = utsmpl.sample_opponents_os(sample_path, startswith_keyword, 1, selection=opponent_selection, randomly_reseed=randomly_reseed_sampling, delta=self.archive.delta, idx=self.reset_counter)[0]
             self.target_opponent_policy_name = sampled_opponent
         
         if(self.OS):
@@ -122,6 +123,8 @@ class SelfPlayEnvSB3:
             print(f"Reset, env name: {self._name}, archive_id: {self.archive.random_id}, target_policy: {self.target_opponent_policy_name}")
         
         self._load_opponent(self.target_opponent_policy_name)
+        self.reset_counter += 1
+
 
 class SelfPlayPredEnv(SelfPlayEnvSB3, PredPrey1v1Pred):
     # wrapper over the normal single player env, but loads the best self play model
