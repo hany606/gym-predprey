@@ -30,10 +30,11 @@ from bach_utils.SelfPlay import SelfPlayEnvSB3
 class SelfPlayPredEnv(SelfPlayEnvSB3, PredPrey1v1Pred):
     # wrapper over the normal single player env, but loads the best self play model
     def __init__(self, *args, **kwargs):
-        seed_val = kwargs['seed_val']
-        del kwargs['seed_val']
+        seed_val = kwargs.pop('seed_val')
+        gui = kwargs.pop('gui')
+        reward_type = kwargs.pop('reward_type', None)
         SelfPlayEnvSB3.__init__(self, *args, **kwargs)  # env_opponent_name="prey"
-        PredPrey1v1Pred.__init__(self, seed_val=seed_val)
+        PredPrey1v1Pred.__init__(self, seed_val=seed_val, gui=gui, reward_type=reward_type)
         self.prey_policy = self # It replaces the policy for the other agent with the best policy that found during reset (This class have it)
 
     # Change to search only for the prey
@@ -45,10 +46,11 @@ class SelfPlayPredEnv(SelfPlayEnvSB3, PredPrey1v1Pred):
 class SelfPlayPreyEnv(SelfPlayEnvSB3, PredPrey1v1Prey):
     # wrapper over the normal single player env, but loads the best self play model
     def __init__(self, *args, **kwargs):
-        seed_val = kwargs['seed_val']
-        del kwargs['seed_val']
+        seed_val = kwargs.pop('seed_val')
+        gui = kwargs.pop('gui')
+        reward_type = kwargs.pop('reward_type', None)
         SelfPlayEnvSB3.__init__(self, *args, **kwargs)  # env_opponent_name="pred"
-        PredPrey1v1Prey.__init__(self, seed_val=seed_val)
+        PredPrey1v1Prey.__init__(self, seed_val=seed_val, gui=gui, reward_type=reward_type)
         self.pred_policy = self # It replaces the policy for the other agent with the best policy that found during reset (This class have it)
 
     # Change to search only for the prey

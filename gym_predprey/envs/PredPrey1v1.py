@@ -74,7 +74,8 @@ class PredPreyEvorobot(gym.Env):
                         pred_policy=None, 
                         prey_policy=None, 
                         seed_val=45, 
-                        reward_type="normal"):
+                        reward_type=None,
+                        gui=False):
         self.nrobots = 2
         self.env = ErPredprey.PyErProblem()
 
@@ -105,7 +106,7 @@ class PredPreyEvorobot(gym.Env):
         self.prey_behavior = prey_behavior
         self.pred_policy = pred_policy
         self.prey_policy = prey_policy
-        self.reward_type = reward_type
+        self.reward_type = "normal" if reward_type is None else reward_type
         self.caught = False
         self.steps_done = False
 
