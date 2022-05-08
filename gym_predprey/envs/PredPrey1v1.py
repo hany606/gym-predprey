@@ -90,6 +90,7 @@ class PredPreyEvorobot(gym.Env):
         self.env.copyAct(self.ac)
         self.env.copyDone(self.done)
         self.env.copyDobj(self.objs)
+        self.seed_val = seed_val
         self.seed(seed_val)
 
         self.action_space      = spaces.Box(low=np.array([-1 for _ in range(self.nrobots*self.env.noutputs)]),
@@ -114,11 +115,13 @@ class PredPreyEvorobot(gym.Env):
         self.max_num_steps = max_num_steps
         self.prey_behavior = prey_behavior
 
-    def seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-        print(f"Seed: {seed}")
-        self.env.seed(seed)
-        return [seed]
+    def seed(self, seed_val=None):
+        self.np_random, seed_val = seeding.np_random(seed_val)
+        print(f"Seed (env): {self.seed_val}")
+        # This is due to some problems, I do not know the reason that it make seed when it is not called
+        print(f"Warn: if you want to seed with different value, change seed_value of env first")
+        self.env.seed(self.seed_val)
+        return [self.seed_val]
 
     def reset(self):
         self.env.reset()
