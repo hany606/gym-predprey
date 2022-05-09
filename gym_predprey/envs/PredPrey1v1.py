@@ -22,6 +22,8 @@ from gym.utils import seeding
 
 import ErPredprey
 
+OBS_HIGH = 1
+
 
 class Behavior: # For only prey for now, we need to make it configured for the predator also :TODO:
     def __init__(self, **kwargs):
@@ -97,8 +99,8 @@ class PredPreyEvorobot(gym.Env):
                                             high=np.array([1 for _ in range(self.nrobots*self.env.noutputs)]),
                                             dtype=np.float32)
         self.observation_space = spaces.Box(low=np.array([0 for _ in range(self.nrobots*self.env.ninputs)]),
-                                            high=np.array([1000 for _ in range(self.nrobots*self.env.ninputs)]),
-                                            dtype=np.float64)
+                                            high=np.array([OBS_HIGH for _ in range(self.nrobots*self.env.ninputs)]),
+                                            dtype=np.float32)
 
 
         self.num_steps = 0
@@ -244,107 +246,107 @@ class PredPreyEvorobot(gym.Env):
         info = f'Step: {self.num_steps}'
         return renderWorld.update(deepcopy(self.objs), info, deepcopy(self.ob), deepcopy(self.ac), None, extra_info=extra_info)
         
-# Env that has dictionary of observations for multi-agent training
-# This is made in context of multi-agent system
-# Old
-class PredPrey1v1(PredPreyEvorobot, gym.Env):#, MultiAgentEnv):
-    def __init__(self, **kwargs):
-        PredPreyEvorobot.__init__(self, **kwargs)
-        self.action_space      = spaces.Dict({i: spaces.Box(low=np.array([-1 for _ in range(self.env.noutputs)]),
-                                                 high=np.array([1 for _ in range(self.env.noutputs)]),
-                                                 dtype=np.float32) for i in range(self.nrobots)})
-        self.observation_space = spaces.Dict({i: spaces.Box(low=np.array([0     for _ in range(self.env.ninputs)]),
-                                                 high=np.array([1000 for _ in range(self.env.ninputs)]),
-                                                 dtype=np.float64) for i in range(self.nrobots)})
-        self.caught = False
+# # Env that has dictionary of observations for multi-agent training
+# # This is made in context of multi-agent system
+# # Old
+# class PredPrey1v1(PredPreyEvorobot, gym.Env):#, MultiAgentEnv):
+#     def __init__(self, **kwargs):
+#         PredPreyEvorobot.__init__(self, **kwargs)
+#         self.action_space      = spaces.Dict({i: spaces.Box(low=np.array([-1 for _ in range(self.env.noutputs)]),
+#                                                  high=np.array([1 for _ in range(self.env.noutputs)]),
+#                                                  dtype=np.float32) for i in range(self.nrobots)})
+#         self.observation_space = spaces.Dict({i: spaces.Box(low=np.array([0     for _ in range(self.env.ninputs)]),
+#                                                  high=np.array([1000 for _ in range(self.env.ninputs)]),
+#                                                  dtype=np.float32) for i in range(self.nrobots)})
+#         self.caught = False
 
-    def _process_action(self, action):
-        action = np.array([action[0], action[1]]).flatten()
-        PredPreyEvorobot._process_action(self, action)
+#     def _process_action(self, action):
+#         action = np.array([action[0], action[1]]).flatten()
+#         PredPreyEvorobot._process_action(self, action)
 
-    def _process_observation(self):
-        ob = PredPreyEvorobot._process_observation(self)
-        ninputs = self.env.ninputs
-        nrobots = self.nrobots
-        return {i: ob[i*ninputs: i*ninputs + ninputs] for i in range(nrobots)}
+#     def _process_observation(self):
+#         ob = PredPreyEvorobot._process_observation(self)
+#         ninputs = self.env.ninputs
+#         nrobots = self.nrobots
+#         return {i: ob[i*ninputs: i*ninputs + ninputs] for i in range(nrobots)}
 
-    # Adapted from: https://github.com/openai/multiagent-competition/blob/master/gym-compete/gym_compete/new_envs/you_shall_not_pass.py
-    # Two teams: predetor and prey
-    # Prey needs to run away and the predetor needs to catch it
-    # Rewards:
-    #   If predetor caught the prey:
-    #       It is finished and predetor gets +1000 and prey -1000
-    #   If the predetor did not catch the prey:
-    #       The prey gets +10 and the predetor -10
-    #   if the episode finished the prey get +1000 and predetor -1000
+#     # Adapted from: https://github.com/openai/multiagent-competition/blob/master/gym-compete/gym_compete/new_envs/you_shall_not_pass.py
+#     # Two teams: predetor and prey
+#     # Prey needs to run away and the predetor needs to catch it
+#     # Rewards:
+#     #   If predetor caught the prey:
+#     #       It is finished and predetor gets +1000 and prey -1000
+#     #   If the predetor did not catch the prey:
+#     #       The prey gets +10 and the predetor -10
+#     #   if the episode finished the prey get +1000 and predetor -1000
 
-    # OpenAI human blocker reward function
-    #     Some Walker reaches end:
-    #         walker which did touchdown: +1000
-    #         all blockers: -1000
-    #     No Walker reaches end:
-    #         all walkers: -1000
-    #         if blocker is standing:
-    #             blocker gets +1000
-    #         else:
-    #             blocker gets 0
-    def _process_reward(self, ob, _, done):
-        # if the predetor(pursuer) caught the prey(evader) then the predetor takes good reward and done
-        # if the predetor couldn't catch the prey then it will take negative reward
-        prey_reward = 10
-        predetor_reward = -10
-        # dist = np.linalg.norm(ob[0] - ob[1]) # this was made if the agent returned x and y positions
-        # eps = 200
-        # print(f"distance: {dist}")
-        # if (dist < eps):
-        if(done["__all__"]):   # if the predetor caught the prey
-            # self.caught = True
-            prey_reward = -1000
-            predetor_reward = 1000
-        if(self.num_steps >= self.max_num_steps):
-            prey_reward = 1000
-            predetor_reward = -1000
-        # "predetor": 0, "prey": 1
-        return {0:predetor_reward, 1:prey_reward}
+#     # OpenAI human blocker reward function
+#     #     Some Walker reaches end:
+#     #         walker which did touchdown: +1000
+#     #         all blockers: -1000
+#     #     No Walker reaches end:
+#     #         all walkers: -1000
+#     #         if blocker is standing:
+#     #             blocker gets +1000
+#     #         else:
+#     #             blocker gets 0
+#     def _process_reward(self, ob, _, done):
+#         # if the predetor(pursuer) caught the prey(evader) then the predetor takes good reward and done
+#         # if the predetor couldn't catch the prey then it will take negative reward
+#         prey_reward = 10
+#         predetor_reward = -10
+#         # dist = np.linalg.norm(ob[0] - ob[1]) # this was made if the agent returned x and y positions
+#         # eps = 200
+#         # print(f"distance: {dist}")
+#         # if (dist < eps):
+#         if(done["__all__"]):   # if the predetor caught the prey
+#             # self.caught = True
+#             prey_reward = -1000
+#             predetor_reward = 1000
+#         if(self.num_steps >= self.max_num_steps):
+#             prey_reward = 1000
+#             predetor_reward = -1000
+#         # "predetor": 0, "prey": 1
+#         return {0:predetor_reward, 1:prey_reward}
 
-    def _process_done(self):
-        self.caught = PredPreyEvorobot._process_done(self)
-        bool_val = True if(self.caught or self.num_steps >= self.max_num_steps) else False
-        done = {i: bool_val for i in range(self.nrobots)}
-        done["__all__"] = True if True in done.values() else False
-        return done
+#     def _process_done(self):
+#         self.caught = PredPreyEvorobot._process_done(self)
+#         bool_val = True if(self.caught or self.num_steps >= self.max_num_steps) else False
+#         done = {i: bool_val for i in range(self.nrobots)}
+#         done["__all__"] = True if True in done.values() else False
+#         return done
 
-    def _process_info(self):
-        return {i: {} for i in range(self.nrobots)}
+#     def _process_info(self):
+#         return {i: {} for i in range(self.nrobots)}
 
-# Env that has all observations in one list (train as single agent -> one network but for multi-agent)
-# Old
-class PredPrey1v1Super(PredPreyEvorobot, gym.Env):
-    def __init__(self, **kwargs):
-        PredPreyEvorobot.__init__(self, **kwargs)
-        self.action_space      = spaces.Box(low=np.array([-1 for _ in range(self.env.noutputs * self.nrobots)]),
-                                            high=np.array([1 for _ in range(self.env.noutputs * self.nrobots)]),
-                                            dtype=np.float32)
-        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs * self.nrobots)]),
-                                            high=np.array([1000 for _ in range(self.env.ninputs * self.nrobots)]),
-                                            dtype=np.float64)
+# # Env that has all observations in one list (train as single agent -> one network but for multi-agent)
+# # Old
+# class PredPrey1v1Super(PredPreyEvorobot, gym.Env):
+#     def __init__(self, **kwargs):
+#         PredPreyEvorobot.__init__(self, **kwargs)
+#         self.action_space      = spaces.Box(low=np.array([-1 for _ in range(self.env.noutputs * self.nrobots)]),
+#                                             high=np.array([1 for _ in range(self.env.noutputs * self.nrobots)]),
+#                                             dtype=np.float32)
+#         self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs * self.nrobots)]),
+#                                             high=np.array([1000 for _ in range(self.env.ninputs * self.nrobots)]),
+#                                             dtype=np.float32)
 
-    # # TODO: think about it more and read about it
-    # def _process_reward(self, ob, returned_reward, done):
-    #     prey_reward = 1
-    #     predetor_reward = -1
-    #     # dist = np.linalg.norm(ob[0] - ob[1]) # this was made if the agent returned x and y positions
-    #     # eps = 200
-    #     # print(f"distance: {dist}")
-    #     # if (dist < eps):
-    #     if(done):   # if the predetor caught the prey
-    #         # self.caught = True
-    #         prey_reward = -10
-    #         predetor_reward = 10
-    #     if(self.num_steps >= self.max_num_steps):
-    #         prey_reward = 10
-    #         predetor_reward = -10            
-    #     return predetor_reward#[prey_reward, predetor_reward]
+#     # # TODO: think about it more and read about it
+#     # def _process_reward(self, ob, returned_reward, done):
+#     #     prey_reward = 1
+#     #     predetor_reward = -1
+#     #     # dist = np.linalg.norm(ob[0] - ob[1]) # this was made if the agent returned x and y positions
+#     #     # eps = 200
+#     #     # print(f"distance: {dist}")
+#     #     # if (dist < eps):
+#     #     if(done):   # if the predetor caught the prey
+#     #         # self.caught = True
+#     #         prey_reward = -10
+#     #         predetor_reward = 10
+#     #     if(self.num_steps >= self.max_num_steps):
+#     #         prey_reward = 10
+#     #         predetor_reward = -10            
+#     #     return predetor_reward#[prey_reward, predetor_reward]
 
 class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
     def __init__(self, **kwargs):
@@ -358,8 +360,8 @@ class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
         #                                     dtype=np.float64)
 
         self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs*self.nrobots)]),
-                                            high=np.array([1000 for _ in range(self.env.ninputs*self.nrobots)]),
-                                            dtype=np.float64)
+                                            high=np.array([OBS_HIGH for _ in range(self.env.ninputs*self.nrobots)]),
+                                            dtype=np.float32)
 
 
     def _process_action(self, action):
@@ -422,8 +424,8 @@ class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
         #                                     dtype=np.float64)
 
         self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs*self.nrobots)]),
-                                            high=np.array([1000 for _ in range(self.env.ninputs*self.nrobots)]),
-                                            dtype=np.float64)
+                                            high=np.array([OBS_HIGH for _ in range(self.env.ninputs*self.nrobots)]),
+                                            dtype=np.float32)
 
 
     def _process_action(self, action):

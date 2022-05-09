@@ -8,15 +8,15 @@ register(
     entry_point='gym_predprey.envs:PredPreyEvorobot',
 )
 
-register(
-    id='PredPrey-1v1-v0',
-    entry_point='gym_predprey.envs:PredPrey1v1',
-)
+# register(
+#     id='PredPrey-1v1-v0',
+#     entry_point='gym_predprey.envs:PredPrey1v1',
+# )
 
-register(
-    id='PredPrey-Superior-1v1-v0',
-    entry_point='gym_predprey.envs:PredPrey1v1Super',
-)
+# register(
+#     id='PredPrey-Superior-1v1-v0',
+#     entry_point='gym_predprey.envs:PredPrey1v1Super',
+# )
 
 register(
     id='PredPrey-Pred-v0',
