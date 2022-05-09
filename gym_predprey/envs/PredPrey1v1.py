@@ -22,7 +22,7 @@ from gym.utils import seeding
 
 import ErPredprey
 
-OBS_HIGH = 1
+OBS_HIGH = 1000
 
 
 class Behavior: # For only prey for now, we need to make it configured for the predator also :TODO:
@@ -117,16 +117,21 @@ class PredPreyEvorobot(gym.Env):
         self.max_num_steps = max_num_steps
         self.prey_behavior = prey_behavior
 
+    def set_seed(self, seed_val):
+        self.seed_val = seed_val
+
     def seed(self, seed_val=None):
         self.np_random, seed_val = seeding.np_random(seed_val)
         print(f"Seed (env): {self.seed_val}")
+        if(seed_val != self.seed_val):
+            print(f"Warn: if you want to seed with different value, change seed_value of env first")
         # This is due to some problems, I do not know the reason that it make seed when it is not called
-        print(f"Warn: if you want to seed with different value, change seed_value of env first")
         self.env.seed(self.seed_val)
         return [self.seed_val]
 
     def reset(self):
         self.env.reset()
+        self.seed(self.seed_val)
         self.num_steps = 0
         ob = self._process_observation()
         return ob
