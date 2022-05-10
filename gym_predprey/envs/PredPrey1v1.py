@@ -369,8 +369,8 @@ class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
                                             high=np.array([1 for _ in range(self.env.noutputs)]),
                                             dtype=np.float32)
         # Changed the observation input
-        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs)]),
-                                            high=np.array([OBS_HIGH for _ in range(self.env.ninputs)]),
+        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs-2)]),
+                                            high=np.array([OBS_HIGH for _ in range(self.env.ninputs-2)]),
                                             dtype=np.float32)
         # self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs*self.nrobots)]),
         #                                     high=np.array([OBS_HIGH for _ in range(self.env.ninputs*self.nrobots)]),
@@ -440,8 +440,8 @@ class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
                                             high=np.array([1 for _ in range(self.env.noutputs)]),
                                             dtype=np.float32)
         # Changed the observation input
-        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs)]),
-                                            high=np.array([OBS_HIGH for _ in range(self.env.ninputs)]),
+        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs-2)]),
+                                            high=np.array([OBS_HIGH for _ in range(self.env.ninputs-2)]),
                                             dtype=np.float32)
 
         # self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs*self.nrobots)]),
