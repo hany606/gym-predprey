@@ -78,11 +78,11 @@ Problem::Problem()
         }
 	
 	   ninputs = 0;
-       ninputs += initInfraredSensor(ro);     // infrared sensor (8 units)
-       ninputs += initCameraPPSensor(ro);
-       ninputs += initGroundGradSensor(ro);
-       ninputs += initTimeSensor(ro);
-       ninputs += initBiasSensor(ro);
+       ninputs += initInfraredSensor(ro);   // infrared sensor (8 units)
+       ninputs += initCameraPPSensor(ro);   // 8 sectors + 1 distance (9)
+       ninputs += initGroundGradSensor(ro); // 5
+       ninputs += initTimeSensor(ro);       // 1
+       ninputs += initBiasSensor(ro);       // 1
         
 	   ro->sensorinfraredid = 0; 			  // the id of the first infrared sensors (used for graphic purpose only to visually siaplay infrared activity)
 

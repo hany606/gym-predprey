@@ -562,8 +562,10 @@ def update(wobj, info, ob, ac, nact, extra_info=None):
                 keys_returns = 7
             elif(symbol == 119):    #w
                 keys_returns = 8
+            elif(symbol == 32):    #w
+                keys_returns = 9
             else:
-                print("key", symbol, modifiers)
+                print("Undefined key", symbol, modifiers)
 
         win.set_size(600+10, 400+10+100)
         glEnable(GL_BLEND)

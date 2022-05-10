@@ -151,6 +151,7 @@ class PredPreyEvorobot(gym.Env):
         self.ac = np.array(self.ac, dtype=np.float32)
         # Contruct the actions for the opponent
         if(self.prey_behavior is not None):
+            # print(self.prey_behavior(deepcopy(self.ac), self.num_steps, self.ob))
             self.ac = self.prey_behavior(deepcopy(self.ac), self.num_steps, self.ob)
             # print(self.ac)
         if(self.pred_policy is not None):
@@ -252,6 +253,13 @@ class PredPreyEvorobot(gym.Env):
         info = f'Step: {self.num_steps}'
         return renderWorld.update(deepcopy(self.objs), info, deepcopy(self.ob), deepcopy(self.ac), None, extra_info=extra_info)
         
+
+    def _get_prey_observation(self, observation):
+        return observation[self.env.ninputs:self.env.ninputs*2-2]
+
+    def _get_pred_observation(self, observation):
+        return observation[:self.env.ninputs-2]
+
 # # Env that has dictionary of observations for multi-agent training
 # # This is made in context of multi-agent system
 # # Old
@@ -385,11 +393,13 @@ class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
         # return deepcopy(ob[self.env.ninputs:])
         return deepcopy(ob)
 
-    def _get_opponent_observation(self, observation):
-        return observation[self.env.ninputs:self.env.ninputs+self.env.ninputs]
+
 
     def _get_agent_observation(self, observation):
-        return observation[:self.env.ninputs]
+        return self._get_pred_observation(observation)
+
+    def _get_opponent_observation(self, observation):
+        return self._get_prey_observation(observation)
 
     def who_won(self):
         if(self.caught):
@@ -441,7 +451,7 @@ class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
 
     def _process_action(self, action):
         if(self.pred_behavior is None and self.pred_policy is None):
-            raise ValueError("prey_behavior or prey_policy should be specified")
+            raise ValueError("pred_behavior or pred_policy should be specified")
 
         action = np.array([[0,0], action]).flatten()
         PredPreyEvorobot._process_action(self, action)
@@ -457,10 +467,10 @@ class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
         return deepcopy(ob)
 
     def _get_agent_observation(self, observation):
-        return observation[self.env.ninputs:]
+        return self._get_prey_observation(observation)
 
     def _get_opponent_observation(self, observation):
-        return observation[:self.env.ninputs]
+        return self._get_pred_observation(observation)
 
     def who_won(self):
         if(self.caught):
@@ -499,18 +509,21 @@ if __name__ == "__main__":
     from gym_predprey.envs.PredPrey1v1 import Behavior
 
     # env = gym.make('PredPrey-Superior-1v1-v0')
-    env = PredPreyEvorobot(seed_val=45)
+    # env = PredPreyEvorobot(seed_val=45)
+    behavior = Behavior()
 
+    env = PredPrey1v1Pred(prey_behavior=behavior.fixed_prey)
     # behavior = Behavior(**{"amplitude":0.5, "freq":15})
     # env.reinit(prey_behavior=behavior.cos_1D)
 
-    behavior = Behavior()
     env.reinit(prey_behavior=behavior.fixed_prey)
 
     for i in range(3):
         env.reset()
+        action = [0,0]
         for _ in range (1000):
-            action = [1,-1,0,0]#env.action_space.sample()
+            # action = [0,0]#,0,0]#env.action_space.sample()
+            action = env.action_space.sample()
             # action[0] = [0,0]
             # action[1] = 1
             # action[2] = 1
@@ -518,14 +531,26 @@ if __name__ == "__main__":
             observation, reward, done, info = env.step(action)
             print(observation.shape)
             print(observation)
-            print(reward)
+            # print(reward)
             ret = env.render(extra_info=f"Round {i}vs1")
+            
+            if(ret == 6):
+                action = [1,1]
+            elif(ret == 4):
+                action = [-1,1]
+            elif(ret == 5):
+                action = [-1,-1]
+            elif(ret == 7):
+                action = [1,-1]
+            elif(ret == 9):
+                action = [0,0]
+
             if(ret != 0):
                 print(ret)
             if(ret < 0):
                 print("Rendering has been killed")
                 break
-            sleep(0.01)
+            sleep(0.1)
             # print(done)
             if ((isinstance(done, dict) and done["__all__"]) or (isinstance(done, bool) and done)):
                 break
