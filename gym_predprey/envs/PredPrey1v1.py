@@ -149,6 +149,11 @@ class PredPreyEvorobot(gym.Env):
         #   For example, for pred_env -> the main is the predator and the opponenet is the prey and vice versa
         self.ac = deepcopy(action)
         self.ac = np.array(self.ac, dtype=np.float32)
+        # print("--------------------------- Self ---------------------------")
+        # print_obs(self._get_agent_observation(self.ob))
+        # print("--------------------------- Opponent ---------------------------")
+        # print_obs(self._get_opponent_observation(self.ob))
+        # print("----------------------------------------------------------------")
         # Contruct the actions for the opponent
         if(self.prey_behavior is not None):
             # print(self.prey_behavior(deepcopy(self.ac), self.num_steps, self.ob))
@@ -501,6 +506,11 @@ class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
         # return prey_reward
 
 
+def print_obs(obs):
+    print(f"Infra: {obs[0:8]}")
+    print(f"Camra: {obs[8:8+9]}")
+    print(f"Ground: {obs[17:17+5]}")
+
 if __name__ == "__main__":
     import gym
     # import gym_predprey
@@ -521,16 +531,17 @@ if __name__ == "__main__":
     for i in range(3):
         env.reset()
         action = [0,0]
-        for _ in range (1000):
+        # for _ in range (1000):
+        while True:
             # action = [0,0]#,0,0]#env.action_space.sample()
-            action = env.action_space.sample()
+            # action = env.action_space.sample()
             # action[0] = [0,0]
             # action[1] = 1
             # action[2] = 1
             # action[3] = 1
             observation, reward, done, info = env.step(action)
-            print(observation.shape)
-            print(observation)
+            # print(observation.shape)
+            # print(observation)
             # print(reward)
             ret = env.render(extra_info=f"Round {i}vs1")
             
