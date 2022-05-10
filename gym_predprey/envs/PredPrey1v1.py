@@ -134,7 +134,7 @@ class PredPreyEvorobot(gym.Env):
         self.seed(self.seed_val)
         self.num_steps = 0
         ob = self._process_observation()
-        return ob
+        return self._get_agent_observation(ob)
 
     def _get_agent_observation(self, ob):
         return deepcopy(ob)
@@ -236,14 +236,15 @@ class PredPreyEvorobot(gym.Env):
         self._process_action(action)        # self.ac has changed
         reward = self.env.step()
         ob = self._process_observation()    # self.ob has changed
-        if(ob.shape != self.observation_space.shape):
-            raise ValueError("Observation space is incorrect")
+        # if(ob.shape != self.observation_space.shape):
+        #     raise ValueError("Observation space is incorrect")
         done = self._process_done()         # self.done has changed
         reward = self._process_reward(ob, reward, self.done[0])
         info = self._process_info()
         if(done):
             print(info)
-        return ob, reward, done, info
+        # print(self._get_agent_observation(ob).shape, self._get_opponent_observation(ob).shape)
+        return self._get_agent_observation(ob), reward, done, info
 
     def render(self, mode='human', extra_info=None):
         from gym_predprey.envs import renderWorld
@@ -360,13 +361,12 @@ class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
                                             high=np.array([1 for _ in range(self.env.noutputs)]),
                                             dtype=np.float32)
         # Changed the observation input
-        # self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs)]),
-        #                                     high=np.array([1000 for _ in range(self.env.ninputs)]),
-        #                                     dtype=np.float64)
-
-        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs*self.nrobots)]),
-                                            high=np.array([OBS_HIGH for _ in range(self.env.ninputs*self.nrobots)]),
+        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs)]),
+                                            high=np.array([OBS_HIGH for _ in range(self.env.ninputs)]),
                                             dtype=np.float32)
+        # self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs*self.nrobots)]),
+        #                                     high=np.array([OBS_HIGH for _ in range(self.env.ninputs*self.nrobots)]),
+        #                                     dtype=np.float32)
 
 
     def _process_action(self, action):
@@ -384,6 +384,12 @@ class PredPrey1v1Pred(PredPreyEvorobot, gym.Env):
         # return deepcopy(ob[:self.env.ninputs])
         # return deepcopy(ob[self.env.ninputs:])
         return deepcopy(ob)
+
+    def _get_opponent_observation(self, observation):
+        return observation[self.env.ninputs:self.env.ninputs+self.env.ninputs]
+
+    def _get_agent_observation(self, observation):
+        return observation[:self.env.ninputs]
 
     def who_won(self):
         if(self.caught):
@@ -424,13 +430,13 @@ class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
                                             high=np.array([1 for _ in range(self.env.noutputs)]),
                                             dtype=np.float32)
         # Changed the observation input
-        # self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs)]),
-        #                                     high=np.array([1000 for _ in range(self.env.ninputs)]),
-        #                                     dtype=np.float64)
-
-        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs*self.nrobots)]),
-                                            high=np.array([OBS_HIGH for _ in range(self.env.ninputs*self.nrobots)]),
+        self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs)]),
+                                            high=np.array([OBS_HIGH for _ in range(self.env.ninputs)]),
                                             dtype=np.float32)
+
+        # self.observation_space = spaces.Box(low=np.array([0     for _ in range(self.env.ninputs*self.nrobots)]),
+        #                                     high=np.array([OBS_HIGH for _ in range(self.env.ninputs*self.nrobots)]),
+        #                                     dtype=np.float32)
 
 
     def _process_action(self, action):
@@ -449,6 +455,12 @@ class PredPrey1v1Prey(PredPreyEvorobot, gym.Env):
         # return deepcopy(ob[self.env.ninputs:])
         # return deepcopy(ob[:self.env.ninputs])
         return deepcopy(ob)
+
+    def _get_agent_observation(self, observation):
+        return observation[self.env.ninputs:]
+
+    def _get_opponent_observation(self, observation):
+        return observation[:self.env.ninputs]
 
     def who_won(self):
         if(self.caught):
