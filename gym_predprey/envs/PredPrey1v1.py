@@ -182,6 +182,8 @@ class PredPreyEvorobot(gym.Env):
 
         # print(self.ac)
         # self.env.copyAct(self.ac)
+        for i in range(self.env.noutputs):
+            self.ac[self.env.noutputs+i] *= 0.8
         self.env.copyAct(deepcopy(self.ac))
 
     def _process_observation(self):
