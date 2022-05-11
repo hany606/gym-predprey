@@ -1,5 +1,7 @@
 # This file is written with taking as a reference: https://github.com/snolfi/longdpole/blob/master/longdpole/envs/longdpole_env.py
 # Predetor, Prey -> Predetor is red, Prey is green
+from bach_utils.logger import get_logger
+clilog = get_logger()
 
 import sys
 import os
@@ -123,9 +125,9 @@ class PredPreyEvorobot(gym.Env):
 
     def seed(self, seed_val=None):
         self.np_random, seed_val = seeding.np_random(seed_val)
-        print(f"Seed (env): {self.seed_val}")
+        clilog.debug(f"Seed (env): {self.seed_val}")
         if(seed_val != self.seed_val):
-            print(f"Warn: if you want to seed with different value, change seed_value of env first")
+            clilog.warn(f"Warn: if you want to seed with different value, change seed_value of env first")
         # This is due to some problems, I do not know the reason that it make seed when it is not called
         self.env.seed(self.seed_val)
         return [self.seed_val]
@@ -249,7 +251,7 @@ class PredPreyEvorobot(gym.Env):
         reward = self._process_reward(ob, reward, self.done[0])
         info = self._process_info()
         if(done):
-            print(info)
+            clilog.debug(info)
         # print(self._get_agent_observation(ob).shape, self._get_opponent_observation(ob).shape)
         return self._get_agent_observation(ob), reward, done, info
 
