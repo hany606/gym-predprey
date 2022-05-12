@@ -24,7 +24,7 @@ from gym.utils import seeding
 
 import ErPredprey
 
-OBS_HIGH = 1000 #1
+OBS_HIGH = 1#1000 #1
 EXTRA_OBS = 0 #2
 
 
@@ -182,8 +182,8 @@ class PredPreyEvorobot(gym.Env):
 
         # print(self.ac)
         # self.env.copyAct(self.ac)
-        for i in range(self.env.noutputs):
-            self.ac[self.env.noutputs+i] *= 0.8
+        # for i in range(self.env.noutputs):
+        #     self.ac[self.env.noutputs+i] *= 0.8
         self.env.copyAct(deepcopy(self.ac))
 
     def _process_observation(self):
@@ -200,12 +200,15 @@ class PredPreyEvorobot(gym.Env):
         norm_action_prey     = np.tanh(np.linalg.norm(action[self.env.noutputs:]))/3
         # Dense reward based on catching without taking into consideration the distance between them
         prey_reward, predetor_reward = None, None
+        timestep_reward = 3*self.num_steps/self.max_num_steps
         if(self.reward_type == "normal"):
-            prey_reward = 1
-            predetor_reward = -1
-        elif(self.reward_type == "action_norm_pen"):
-            prey_reward = 1 - norm_action_prey
-            predetor_reward = -1 - norm_action_predator
+            prey_reward = 1 + timestep_reward
+            predetor_reward = -1 - timestep_reward
+        # elif(self.reward_type == "action_norm_pen"):
+        #     prey_reward = 1 - norm_action_prey
+        #     predetor_reward = -1 - norm_action_predator
+        else:
+            raise ValueError("Not correct value for the reward type")
         # dist = np.linalg.norm(ob[0] - ob[1]) # this was made if the agent returned x and y positions
         # eps = 200
         # print(f"distance: {dist}")
@@ -545,6 +548,7 @@ if __name__ == "__main__":
             # action[2] = 1
             # action[3] = 1
             observation, reward, done, info = env.step(action)
+            print_obs(observation)
             # print(observation.shape)
             # print(observation)
             # print(reward)
