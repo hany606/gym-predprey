@@ -133,8 +133,8 @@ class PredPreyEvorobot(gym.Env):
         return [self.seed_val]
 
     def reset(self):
-        self.env.reset()
         self.seed(self.seed_val)
+        self.env.reset()
         self.num_steps = 0
         ob = self._process_observation()
         return self._get_agent_observation(ob)
@@ -537,7 +537,7 @@ if __name__ == "__main__":
     env.reinit(prey_behavior=behavior.fixed_prey)
 
     for i in range(3):
-        env.reset()
+        observation = env.reset()
         action = [0,0]
         # for _ in range (1000):
         while True:
@@ -547,8 +547,9 @@ if __name__ == "__main__":
             # action[1] = 1
             # action[2] = 1
             # action[3] = 1
-            observation, reward, done, info = env.step(action)
             print_obs(observation)
+            # input("!!!!!!!")
+            observation, reward, done, info = env.step(action)
             # print(observation.shape)
             # print(observation)
             # print(reward)
