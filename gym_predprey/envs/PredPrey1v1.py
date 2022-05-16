@@ -215,11 +215,11 @@ class PredPreyEvorobot(gym.Env):
         # if (dist < eps):
         if(self.caught):   # if the predetor caught the prey
             # self.caught = True
-            prey_reward = -10
-            predetor_reward = 10
+            prey_reward = -1000
+            predetor_reward = 1000
         if(self.steps_done):
-            prey_reward = 10
-            predetor_reward = -10            
+            prey_reward = 1000
+            predetor_reward = -1000            
         return predetor_reward, prey_reward
 
     def _process_done(self):
