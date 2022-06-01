@@ -44,6 +44,9 @@ cdef class PyErProblem:
     def copyObs(self, np.ndarray[float, ndim=1, mode="c"] obs not None):
         self.cproblem.copyObs(&obs[0])
 
+    def copyPos(self, np.ndarray[float, ndim=1, mode="c"] pos not None):
+        self.cproblem.copyPos(&pos[0])
+        
     def copyAct(self, np.ndarray[float, ndim=1, mode="c"] act not None):
         self.cproblem.copyAct(&act[0])
 

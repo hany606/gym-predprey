@@ -35,6 +35,7 @@ public:
 	void render();
 	// Copy the observations
 	void copyObs(float* observation);
+	void copyPos(float* position);
 	// Copy the action
 	void copyAct(float* action);
 	// Copy the termination flag
@@ -53,6 +54,7 @@ private:
     void initEnvironment();
     // compute the state of the observation
 	void getObs();
+	void getPos();
 	// Random generator
 	RandomGenerator* rng;
 

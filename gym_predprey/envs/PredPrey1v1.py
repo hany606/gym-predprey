@@ -86,12 +86,14 @@ class PredPreyEvorobot(gym.Env):
 
         # print(self.env.ninputs) #24 = 8 (ir) + 9 (camera) + 5 (ground) + 1 (bias) + 1 (time)
         self.ob = np.arange(self.env.ninputs * self.nrobots, dtype=np.float32)
+        self.pos_c = np.arange(2*self.nrobots, dtype=np.float32)
         self.ac = np.arange(self.env.noutputs * self.nrobots, dtype=np.float32)
         self.done = np.arange(1, dtype=np.int32)
         self.objs = np.arange(max_num_steps, dtype=np.float64)
         self.objs[0] = -1
 
         self.env.copyObs(self.ob)
+        self.env.copyPos(self.pos_c)
         self.env.copyAct(self.ac)
         self.env.copyDone(self.done)
         self.env.copyDobj(self.objs)
@@ -115,6 +117,9 @@ class PredPreyEvorobot(gym.Env):
         self.reward_type = "normal" if reward_type is None else reward_type
         self.caught = False
         self.steps_done = False
+
+        self._posx_lim = [85,3000]
+        self._posy_lim = [85,3000]
 
     def reinit(self, max_num_steps=1000, prey_behavior=None):
         self.max_num_steps = max_num_steps
@@ -190,6 +195,7 @@ class PredPreyEvorobot(gym.Env):
         self.env.copyObs(self.ob)
         # return self.ob
         return deepcopy(self.ob)
+        
 
     # def _process_reward(self, ob, returned_reward, done):
     #     return returned_reward
@@ -224,6 +230,7 @@ class PredPreyEvorobot(gym.Env):
 
     def _process_done(self):
         self.env.copyDone(self.done)
+
         self.caught = self.done[0]
         self.steps_done = self.num_steps >= self.max_num_steps
         done = True if self.caught or self.steps_done else False
@@ -232,8 +239,6 @@ class PredPreyEvorobot(gym.Env):
         # print(self.steps_done, self.caught)
         return done
 
-    def _process_info(self):
-        return {}
 
     def who_won(self):
         if(self.caught):
@@ -243,7 +248,11 @@ class PredPreyEvorobot(gym.Env):
         return ""
 
     def _process_info(self):
-        return {"win":self.who_won(), "num_steps": self.num_steps}
+        self.env.copyPos(self.pos_c)
+        self.pred_pos = [self.pos_c[0], self.pos_c[1]]
+        self.prey_pos = [self.pos_c[2], self.pos_c[3]]
+
+        return {"win":self.who_won(), "num_steps": self.num_steps, "pred_pos": self.pred_pos, "prey_pos": self.prey_pos}
 
     def step(self, action):
         self.num_steps += 1
@@ -522,7 +531,12 @@ def print_obs(obs):
 if __name__ == "__main__":
     import gym
     # import gym_predprey
+    import numpy as np
+    import matplotlib.pyplot as plt
     from time import sleep
+    import seaborn as sns
+    import pandas as pd
+
 
     from gym_predprey.envs.PredPrey1v1 import Behavior
 
@@ -539,18 +553,27 @@ if __name__ == "__main__":
     for i in range(3):
         observation = env.reset()
         action = [0,0]
+        pred_positions_x = []
+        pred_positions_y = []
+        pred_positions = []
+
         # for _ in range (1000):
         while True:
             # action = [0,0]#,0,0]#env.action_space.sample()
             # action = env.action_space.sample()
-            # action[0] = [0,0]
+            # action[0] = [1,0]
             # action[1] = 1
             # action[2] = 1
             # action[3] = 1
-            print_obs(observation)
+            # print_obs(observation)
             # input("!!!!!!!")
             observation, reward, done, info = env.step(action)
+            pred_pos = info["pred_pos"]
+            pred_positions_x.append(pred_pos[0])
+            pred_positions_y.append(pred_pos[1])
+            pred_positions.append(pred_pos)
             # print(observation.shape)
+            print(info["pred_pos"])
             # print(observation)
             # print(reward)
             ret = env.render(extra_info=f"Round {i}vs1")
@@ -571,8 +594,41 @@ if __name__ == "__main__":
             if(ret < 0):
                 print("Rendering has been killed")
                 break
-            sleep(0.1)
+            sleep(0.08)
             # print(done)
             if ((isinstance(done, dict) and done["__all__"]) or (isinstance(done, bool) and done)):
                 break
+        
+        pred_positions.append([85,85])
+        pred_positions.append([3000,3000])
+        pred_positions_x.extend([85,3000])
+        pred_positions_y.extend([85,3000])
+        pred_positions = np.array(pred_positions)
+
+        # dataset = pd.DataFrame({'x': pred_positions_x, 'y': pred_positions_y})
+        # sns.histplot(
+        #     dataset, x="x", y="y",
+        #     bins=5, discrete=(True, True), #log_scale=(False, True),
+        #     cbar=True, cbar_kws=dict(shrink=.75),
+        # )
+        # plt.show()
+        plt.hist2d(pred_positions_x, pred_positions_y, bins=50)
+        plt.show()
+
+        # heatmap, xedges, yedges = np.histogram2d(pred_positions_x, pred_positions_y, bins=50)
+        # extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
+        # print(extent)
+        # extent = [85, 3000, 85, 3000]
+        # plt.scatter(xedges, yedges)
+        # plt.xlim([85, 3000])
+        # plt.ylim([85, 3000])
+        # plt.show()
+        # plt.clf()
+        # pred_positions = np.array(pred_positions)
+
+        # plt.imshow(heatmap.T, extent=extent, origin='lower')
+        # plt.show()
+        # sns.heatmap(pred_positions)
+        # plt.show()
+
     env.close()

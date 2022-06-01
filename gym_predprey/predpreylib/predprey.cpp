@@ -28,6 +28,7 @@ void readStepsFromConfig();
 
 // Pointer to the observations
 float* cobservation;
+float* cposition;
 // Pointer to the actions
 float* caction;
 // Pointer to termination flag
@@ -154,6 +155,12 @@ void Problem::copyObs(float* observation)
 	cobservation = observation;
 }
 
+void Problem::copyPos(float* position)
+{
+	cposition = position;
+}
+
+
 void Problem::copyAct(float* action)
 {
 	caction = action;
@@ -196,6 +203,23 @@ void Problem::getObs()
     
 }
 
+void Problem::getPos()
+{
+    
+    struct robot *ro;
+    int r;
+    int u;
+    int s;
+    
+    u = 0;
+    for (r=0, ro=rob; r < nrobots; r++, ro++)
+    {
+        cposition[0+r*2] = ro->x;
+        cposition[1+r*2] = ro->y;
+    }
+    
+}
+
 /*
  * perform the action, update the state of the environment, update observations, return the predator's reward
  */
@@ -229,6 +253,7 @@ double Problem::step()
     }
     
 	getObs();
+    getPos();
     
     return(reward);
 

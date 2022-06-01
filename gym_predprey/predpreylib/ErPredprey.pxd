@@ -28,6 +28,7 @@ cdef extern from "predprey.h":
         void render()
         double isDone()
         void copyObs(float* observation)
+        void copyPos(float* position)
         void copyAct(float* action)
         void copyDone(int* done)
         void copyDobj(double* objs)
